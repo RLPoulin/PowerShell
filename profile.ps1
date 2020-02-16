@@ -106,7 +106,6 @@ $PSDefaultParameterValues["Set-LocationUp`:Path"] = ".."
 # Aliases
 
 Set-Alias -Name .. -Value Set-LocationUp -Option AllScope
-
 Set-Alias -Name l -Value Get-ChildItemColorFormatWide -Option AllScope
 Set-Alias -Name la -Value Get-HiddenChildItem -Option AllScope
 Set-Alias -Name ll -Value Get-ChildItem -Option AllScope

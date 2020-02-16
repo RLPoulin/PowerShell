@@ -96,14 +96,8 @@ function Get-VirtualEnvName {
 }
 
 
-function Invoke-Pip {
-    [CmdletBinding()]
-    [OutputType()]
-    [Alias("pip")]
-
-    Param([String[]] $ArgumentList)
-
-    & python -m pip $ArgumentList
+function Invoke-Pip() {
+    & python -m pip $Args
 }
 
 
@@ -168,3 +162,8 @@ function Test-VirtualEnv {
 
     [Boolean] (Get-Command python -ErrorAction SilentlyContinue)
 }
+
+
+# Aliases
+
+Set-Alias -Name pip -Value Invoke-Pip -Option AllScope -Scope Global
