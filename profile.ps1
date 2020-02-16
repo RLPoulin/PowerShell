@@ -44,6 +44,7 @@ $Env:EDITOR = (Get-Command atom).Name
 
 $DefaultUser = $Env:USERNAME
 $CodeFolder = "$Home\Python"
+$PSFolder = $PSScriptRoot
 $TerminalProfiles = "$Env:LOCALAPPDATA\Microsoft\Windows Terminal\profiles.json"
 
 
@@ -112,6 +113,7 @@ Set-Alias -Name ll -Value Get-ChildItem -Option AllScope
 Set-Alias -Name ls -Value Get-ChildItemColorFormatWide -Option AllScope
 
 Set-Alias -Name edit -Value $Env:EDITOR -Option AllScope
+Set-Alias -Name grep -Value rg -Option AllScope
 
 
 # On Start
