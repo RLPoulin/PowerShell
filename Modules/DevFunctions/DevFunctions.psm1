@@ -1,7 +1,6 @@
 <#
 .Synopsis
-    The functions I use for sofware deve
-    lopment.
+    The functions I use for sofware development.
 
 .NOTES
     Version:        1.1
@@ -55,13 +54,12 @@ function Enter-VirtualEnvironment {
     [Alias("venv")]
 
     Param(
-        [Parameter(Position=1)]
+        [Parameter(Position=1, ValueFromPipeline)]
         [String] $Environment
     )
 
     if (Test-Path ".venv\Scripts\Activate.ps1") {
         & ".venv\Scripts\Activate.ps1"
-
     }
     else {
         Set-PyEnv $Environment
@@ -85,7 +83,7 @@ function Get-VirtualEnvName {
         $Python[-4]
     }
     elseif ($Python -contains "miniconda3") {
-        [regex]::Match($Env:CONDA_PROMPT_MODIFIER, "^\((.*)\)").Captures.Groups[1].Value
+        $Env:CONDA_DEFAULT_ENV
     }
     elseif ($Python -contains "scoop") {
         ""
@@ -96,9 +94,7 @@ function Get-VirtualEnvName {
 }
 
 
-function Invoke-Pip() {
-    & python -m pip $Args
-}
+function Invoke-Pip() { & python -m pip $Args }
 
 
 function Set-PyEnv {

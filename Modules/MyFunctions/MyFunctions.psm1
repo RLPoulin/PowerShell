@@ -63,6 +63,7 @@ function New-Directory {
 
     Param (
         [Parameter(Position=1, Mandatory, ValueFromPipeline)]
+        [ValidateNotNullOrEmpty()]
         [ValidateScript( { !(Test-Path -Path $_) } )]
         [Object] $Path
     )
@@ -74,7 +75,7 @@ function New-Directory {
 
 function New-ProxyCommand {
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact="None")]
-    [OutputType()]
+    [OutputType([System.Management.Automation.FunctionInfo])]
     [Alias()]
 
     Param(
@@ -104,6 +105,8 @@ function Remove-Directory {
         [ValidateScript( { Test-Path -Path $_ -PathType Container } )]
         [Object] $Path,
 
+        # Allows the removal of hidden and read-only folders.
+        [Parameter()]
         [Switch] $Force
     )
 
