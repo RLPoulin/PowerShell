@@ -68,8 +68,8 @@ function New-Directory {
         [Object] $Path
     )
 
-    $NewPath = New-Item -Path $Path -ItemType Directory -Force:$Force
-    Set-Location $NewPath
+    $Directory = New-Item -Path $Path -ItemType Directory
+    Set-Location $Directory
 }
 
 
