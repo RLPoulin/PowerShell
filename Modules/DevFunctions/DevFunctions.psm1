@@ -106,16 +106,16 @@ function Send-GitCommit {
     Param()
 
     $Status = Get-GitStatus
-
     if ($Status.HasWorking -or $Status.HasUntracked) {
-        Write-ColoredOutput "Please commit any changes first:" --ForegroundColor Yellow
+        Write-ColoredOutput "Please commit any changes first:" -ForegroundColor Yellow
         Write-Output $Status.Working
         return
     }
 
-    & git push origin --all --force-with-lease
-    Write-Output ""
-    & git push github --all --force-with-lease
+    Foreach ($Remote in (Invoke-Expression "git remote")) {
+        Write-ColoredOutput "`nPushing to $Remote" -ForegroundColor Magenta
+        & git push "$Remote" --all --force-with-lease
+    }
 }
 
 
