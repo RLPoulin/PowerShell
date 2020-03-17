@@ -14,8 +14,9 @@
 
 Set-StrictMode -Version Latest
 
-Import-Module Get-ChildItemColor -Scope Local
-Import-Module MyFunctions -Scope Local
+Import-Module posh-git -NoClobber -Cmdlet Get-GitStatus
+Import-Module Get-ChildItemColor -NoClobber
+Import-Module MyFunctions -NoClobber -Cmdlet Write-ColoredOutput
 
 
 # functions
@@ -97,6 +98,27 @@ function Get-VirtualEnvName {
 function Invoke-Pip() { & python -m pip $Args }
 
 
+function Send-GitCommit {
+    [CmdletBinding()]
+    [OutputType()]
+    [Alias("gitp")]
+
+    Param()
+
+    $Status = Get-GitStatus
+
+    if ($Status.HasWorking -or $Status.HasUntracked) {
+        Write-ColoredOutput "Please commit any changes first:" --ForegroundColor Yellow
+        Write-Output $Status.Working
+        return
+    }
+
+    & git push origin --all --force-with-lease
+    Write-Output ""
+    & git push github --all --force-with-lease
+}
+
+
 function Set-PyEnv {
     [CmdletBinding()]
     [OutputType()]
@@ -119,7 +141,7 @@ function Show-GitStatus {
 
     Param()
 
-    & git status
+    & git status --show-stash
 }
 
 
@@ -146,7 +168,8 @@ function Submit-GitCommit {
 
     Param([String] $Message)
 
-    & git commit -au -m "$Message" }
+    & git commit --all --message="$Message"
+}
 
 
 function Test-VirtualEnv {
