@@ -31,7 +31,7 @@ $Pattern = "$($Date.AddDays(-30).Year)-.+"
 
 Enter-Project MAS
 Clear-Host
-echo $Pattern
+
 Write-ColoredOutput "`nAggregating results since $($Date.ToLongDateString())...`n" `
     -ForegroundColor Magenta
 
