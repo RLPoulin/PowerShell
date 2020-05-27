@@ -6,6 +6,7 @@
     Version:        3.0
     Author:         Robert Poulin
     Creation Date:  2016-06-09
+    Updated:        2020-05-27
     License:        MIT
 
 #>
@@ -45,7 +46,7 @@ $Env:EDITOR = (Get-Command atom).Name
 $DefaultUser = $Env:USERNAME
 $CodeFolder = "$Home\Python"
 $PSFolder = $PSScriptRoot
-$TerminalProfiles = "$Env:LOCALAPPDATA\Microsoft\Windows Terminal\profiles.json"
+$TerminalProfiles = "$Env:LOCALAPPDATA\Microsoft\Windows Terminal\settings.json"
 
 
 # Functions
