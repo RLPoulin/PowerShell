@@ -26,6 +26,7 @@ $Documents = "$Home\Documents"
 $Scoop = (Get-Command scoop).Source
 $ScoopApps = "$Home\Scoop\Apps"
 $7ZipDLL = "$Documents\NppShell64.dll"
+$7ZipTarget = "$ScoopApps\notepadplusplus\current\NppShell64.dll"
 
 $ToStop = @("AutoHotkeyU64", "KeePass")
 $ToStart = @("$Documents\AutoHotkey.ahk", "$ScoopApps\keepass\current\KeePass.exe")
@@ -102,9 +103,9 @@ try {
 }
 catch {
     Write-ColoredOutput "`nError while updating software from Scoop." Red
-    $ExitCode += 1
+    $    += 1
 }
-Copy-UpdatedItem $7ZipDLL "$ScoopApps\notepadplusplus\current\NppShell64.dll"
+Copy-UpdatedItem $7ZipDLL $7ZipTarget
 
 # Start processes
 $ToStart | ForEach-Object { & $_ }
@@ -124,11 +125,13 @@ if ($Process.ExitCode -eq 0) {
         "$Documents\Local-Google.ffs_batch" -Wait -PassThru
 
     if ($Process.ExitCode -ne 0) {
+        $ExitCode += 1
         Write-ColoredOutput `
             "`nError while syncing to Google Drive (Error $($Process.ExitCode))." Red
     }
 }
 else {
+    $ExitCode += 1
     Write-ColoredOutput `
         "`nError while syncing from the server (Error $($Process.ExitCode))." Red
 }
@@ -136,3 +139,5 @@ else {
 
 # End
 Write-ColoredOutput "`nDone!" Magenta
+
+return $ExitCode
