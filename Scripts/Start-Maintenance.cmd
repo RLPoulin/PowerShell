@@ -1,6 +1,8 @@
 @echo off
 
-pwsh -NoProfile -NoLogo -File %~dp0\Start-Maintenance.ps1
+scoop update scoop
+scoop update pwsh
 echo.
 
-scoop update pwsh
+pwsh -NoProfile -NoLogo -File %~dp0\Start-Maintenance.ps1
+echo.

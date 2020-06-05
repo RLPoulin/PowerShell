@@ -97,10 +97,7 @@ catch {
     $ExitCode += 1
 }
 Write-ColoredOutput "`nUpdating Scoop Packages.`n" Magenta
-try {
-    (& $Scoop update scoop) | Out-Null
-    (& $Scoop update *)
-}
+try { & $Scoop update * }
 catch {
     Write-ColoredOutput "`nError while updating software from Scoop." Red
     $    += 1
