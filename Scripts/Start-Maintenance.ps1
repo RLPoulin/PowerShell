@@ -10,40 +10,46 @@
 
 .OUTPUTS
     None
+
+.NOTES
+    Version:        2.0
+    Author:         Robert Poulin
+    Creation Date:  2020-02-24
+    Updated:        2020-06-05
+    License:        MIT
+
 #>
 
 
 #-----------------------------------[Initialisations]-----------------------------------
 
+#Script
 [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'High')]
-Param()
-
+Param(
+    [Parameter(Position=1)] [Int] $ShutdownDelay = 0
+)
 Set-StrictMode -Version Latest
 
 $ExitCode = 0
 
+#Locations
 $Documents = "$Home\Documents"
-$Scoop = (Get-Command scoop).Source
 $ScoopApps = "$Home\Scoop\Apps"
-$7ZipDLL = "$Documents\NppShell64.dll"
-$7ZipTarget = "$ScoopApps\notepadplusplus\current\NppShell64.dll"
 
-$ToStop = @("AutoHotkeyU64", "KeePass")
+#Scoop updates
+$ExcludedPackages = @("firefox", "pwsh")
+$ToStop = @("atom", "AutoHotkeyU64", "KeePass", "notepad++")
 $ToStart = @("$Documents\AutoHotkey.ahk", "$ScoopApps\keepass\current\KeePass.exe")
 
+#Backups
 $FFSync = "$Env:ProgramFiles\FreeFileSync\FreeFileSync.exe"
-$BackupFiles = Get-Item @(
-    "\\server.bioastratech.com\Public\Time sheets\2019\Robert 2019.xlsm",
-    "\\server.bioastratech.com\Public\Time sheets\2020\Robert 2020.xlsm",
-    "$Documents\AutoHotkey.ahk",
-    "$Documents\Powershell"
-)
-$BackupFiles += Get-ChildItem $Home -Filter ".*" -File
-$BackupTarget = "$Documents\Backup"
-$MailBackup = Get-ChildItem "$Documents\eM Client\*.zip" |
-    Sort-Object -Property LastWriteTime |
-    Select-Object -Last 1
-$MailTarget = "$BackupTarget\eM Client Backup.zip"
+$SyncFiles = @{
+    "$Documents\Backup" = Get-Item @(
+            "\\server.bioastratech.com\Public\Time sheets\2019\Robert 2019.xlsm",
+            "\\server.bioastratech.com\Public\Time sheets\2020\Robert 2020.xlsm"
+    );
+    "$ScoopApps\notepadplusplus\current" = Get-Item "$Documents\Backup\NppShell64.dll"
+}
 
 
 #--------------------------------------[Functions]--------------------------------------
@@ -67,12 +73,13 @@ function Copy-UpdatedItem($Path, $Destination) {
         return
     }
     $Path = Get-Item $Path
-    $DestinationExists = $False
     if (Test-Path $Destination) {
         $Destination = Get-Item $Destination
-        $DestinationExists = $True
+        $NewDestination = $False
+    } else {
+        $NewDestination = $True
     }
-    if (!($DestinationExists) -or $Path.LastWriteTime -ne $Destination.LastWriteTime) {
+    if ($NewDestination -or $Path.LastWriteTime -gt $Destination.LastWriteTime) {
         Copy-Item -Path $Path -Destination $Destination -Force -Recurse
     }
 }
@@ -81,60 +88,69 @@ function Copy-UpdatedItem($Path, $Destination) {
 #-------------------------------------[Execution]---------------------------------------
 
 #Update Powershell modules
+Write-ColoredOutput "`nUpdating Powershell Modules.`n" Magenta
 Update-Module -Scope CurrentUser -AcceptLicense
 
-#Stop processes
+#Stop processes for update
 Get-Process $ToStop -ErrorAction SilentlyContinue | Stop-Process
 
 # Scoop
 Write-ColoredOutput "`nCleaning Scoop.`n" Magenta
 try {
-    & $Scoop cleanup *
-    & $Scoop cache rm *
+    & scoop cleanup *
+    & scoop cache rm *
 }
 catch {
     Write-ColoredOutput "`nError while cleaning Scoop." Red
-    $ExitCode += 1
+    $ExitCode += 100
 }
-Write-ColoredOutput "`nUpdating Scoop Packages.`n" Magenta
-try { & $Scoop update * }
-catch {
-    Write-ColoredOutput "`nError while updating software from Scoop." Red
-    $    += 1
+Write-ColoredOutput "`nUpdating Scoop Packages." Magenta
+$Packages = scoop export |
+    ForEach-Object { $_.Split(" ")[0].Trim() } |
+    Where-Object { $_ -cnotin $ExcludedPackages }
+Foreach ($Package in $Packages) {
+    try {
+        Write-Output ""
+        & scoop update $Package
+    }
+    catch {
+        Write-ColoredOutput "Error while updating $Package from Scoop." Red
+        $ExitCode += 1
+    }
 }
-Copy-UpdatedItem $7ZipDLL $7ZipTarget
+scoop export | Out-File $Documents\Backup\Scoop.txt
 
 # Start processes
 $ToStart | ForEach-Object { & $_ }
 
-# Sync
-Write-ColoredOutput "`nSyncing Files." Magenta
-$BackupFiles | ForEach-Object { Copy-UpdatedItem $_ "$BackupTarget\$($_.Name)" }
-Copy-UpdatedItem $MailBackup $MailTarget
+# Sync files
+Write-ColoredOutput "`nCopying Files." Magenta
+Foreach ($Destination in $SyncFiles.Keys) {
+    $SyncFiles[$Destination] |
+        ForEach-Object { Copy-UpdatedItem $_ "$Destination\$($_.Name)" }
+}
 
-Write-ColoredOutput "`nSyncing files from the server..." Green
+# Backup
+Write-ColoredOutput "`nRunning Backup." Magenta
 $Process = Start-Process $FFSync -ArgumentList `
     "$Documents\Server-Local.ffs_batch" -Wait -PassThru
-
-if ($Process.ExitCode -eq 0) {
-    Write-ColoredOutput "`nSyncing files to Google Drive..." Green
-    $Process = Start-Process $FFSync -ArgumentList `
-        "$Documents\Local-Google.ffs_batch" -Wait -PassThru
-
-    if ($Process.ExitCode -ne 0) {
-        $ExitCode += 1
-        Write-ColoredOutput `
-            "`nError while syncing to Google Drive (Error $($Process.ExitCode))." Red
-    }
-}
-else {
-    $ExitCode += 1
+if ($Process.ExitCode) {
     Write-ColoredOutput `
-        "`nError while syncing from the server (Error $($Process.ExitCode))." Red
+        "`nError while running backup (Error $($Process.ExitCode))." Red
+    $ExitCode += 1000
 }
 
 
 # End
 Write-ColoredOutput "`nDone!" Magenta
+if ($ExitCode) {
+    Write-ColoredOutput "`nError: $ExitCode" Red
+}
+
+if ($ShutdownDelay) {
+    Write-ColoredOutput "`n`nCOMPUTER SHUTDOWN IN $ShutdownDelay MINUTES!" Yellow
+    Write-ColoredOutput "`n(Press Ctrl+C to abort)" Yellow
+    Start-Sleep -Seconds ($ShutdownDelay * 60) && Stop-Computer
+}
 
 return $ExitCode
