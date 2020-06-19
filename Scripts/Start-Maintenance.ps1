@@ -33,7 +33,7 @@ Set-StrictMode -Version Latest
 $ExitCode = 0
 
 #Locations
-$Documents = "$Home\Documents"
+$Documents = "$Home\OneDrive\Documents"
 $ScoopApps = "$Home\Scoop\Apps"
 
 #Scoop updates
@@ -88,11 +88,19 @@ function Copy-UpdatedItem($Path, $Destination) {
 
 #-------------------------------------[Execution]---------------------------------------
 
-#Update Powershell modules
+# Shutdown Warning
+if ($ShutdownDelay) {
+    Write-ColoredOutput (
+        "`nWarning: the computer will shutdown $ShutdownDelay " +
+        "minutes after this script is finished.`n"
+    ) Red
+}
+
+# Update Powershell modules
 Write-ColoredOutput "`nUpdating Powershell Modules.`n" Magenta
 Update-Module -Scope CurrentUser -AcceptLicense
 
-#Stop processes for update
+# Stop processes for update
 Get-Process $ToStop -ErrorAction SilentlyContinue | Stop-Process
 
 # Scoop
