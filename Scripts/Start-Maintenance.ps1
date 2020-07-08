@@ -159,7 +159,7 @@ if ($ExitCode) {
 if ($ShutdownDelay) {
     Write-ColoredOutput "`n`nCOMPUTER SHUTDOWN IN $ShutdownDelay MINUTES!" Yellow
     Write-ColoredOutput "`n(Press Ctrl+C to abort)" Yellow
-    Start-Sleep -Seconds ($ShutdownDelay * 60) && Stop-Computer
+    Start-Sleep -Seconds ($ShutdownDelay * 60) && Stop-Computer -Force
 }
 
 return $ExitCode
