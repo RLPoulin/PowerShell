@@ -54,32 +54,33 @@ function Copy-File {
     Param(
         [Parameter(Position=1, Mandatory, ValueFromPipeline)]
         [ValidateScript({Test-Path -Path $_})]
-        [string] $from,
+        [String] $Source,
 
         [Parameter(Position=2, Mandatory)]
-        [string] $to
+        [String] $Target
     )
 
-    $ffile = [io.file]::OpenRead($from)
-    $tofile = [io.file]::OpenWrite($to)
-    Write-Progress -Activity "Copying file" -status "$from -> $to" -PercentComplete 0
+    $SourceFile = [io.file]::OpenRead($Source)
+    $TargetFile = [io.file]::OpenWrite($Target)
+    Write-Progress -Activity "Copying file" -status "$Source -> $Target" `
+        -PercentComplete 0
 
     try {
-        [byte[]]$buff = new-object byte[] 4096
-        [long]$total = [long]$count = 0
+        [Byte[]] $Buffer = New-Object Byte[] 4096
+        [Long] $Total = [Long] $Count = 0
         do {
-            $count = $ffile.Read($buff, 0, $buff.Length)
-            $tofile.Write($buff, 0, $count)
-            $total += $count
-            if ($total % 1mb -eq 0) {
-                Write-Progress -Activity "Copying file" -status "$from -> $to" `
-                   -PercentComplete ([int]($total/$ffile.Length* 100))
+            $Count = $SourceFile.Read($Buffer, 0, $Buffer.Length)
+            $TargetFile.Write($Buffer, 0, $Count)
+            $Total += $Count
+            if ($Total % 1mb -eq 0) {
+                Write-Progress -Activity "Copying file" -status "$Source -> $Target" `
+                   -PercentComplete ([Int]($Total/$SourceFile.Length * 100))
             }
-        } while ($count -gt 0)
+        } while ($Count -gt 0)
     }
     finally {
-        $ffile.Dispose()
-        $tofile.Dispose()
+        $SourceFile.Dispose()
+        $TargetFile.Dispose()
         Write-Progress -Activity "Copying file" -Status "Ready" -Completed
     }
 }
