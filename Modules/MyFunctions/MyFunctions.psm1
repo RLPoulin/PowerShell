@@ -114,6 +114,27 @@ function New-Directory {
 }
 
 
+function New-Link {
+    [CmdletBinding(SupportsShouldProcess, ConfirmImpact="Low")]
+    [OutputType()]
+    [Alias("ln")]
+
+    Param (
+        [Parameter(Position=1, Mandatory, ValueFromPipeline)]
+        [ValidateNotNullOrEmpty()]
+        [ValidateScript( { !(Test-Path -Path $_) } )]
+        [Object] $Path,
+
+        [Parameter(Position=2, Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [ValidateScript( { Test-Path -Path $_ } )]
+        [Object] $Target
+    )
+
+    New-Item -Path $Path -ItemType SymbolicLink -Value $Target
+}
+
+
 function New-ProxyCommand {
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact="None")]
     [OutputType([System.Management.Automation.FunctionInfo])]
