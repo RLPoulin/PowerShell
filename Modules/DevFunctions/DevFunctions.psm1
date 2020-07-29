@@ -88,7 +88,7 @@ function Get-VirtualEnvName {
         $Env:CONDA_DEFAULT_ENV
     }
     elseif ($Python -contains "scoop") {
-        ""
+        "Scoop"
     }
     else {
         "???"
