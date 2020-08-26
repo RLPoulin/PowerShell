@@ -38,8 +38,12 @@ $ScoopApps = "$Home\Scoop\Apps"
 
 #Scoop updates
 $ExcludedPackages = @("firefox", "pwsh")
-$ToStop = @("atom", "AutoHotkeyU64", "KeePass", "notepad++")
-$ToStart = @("$Documents\AutoHotkey.ahk", "$ScoopApps\keepass\current\KeePass.exe")
+$ToStop = @("AutoHotkeyU64", "espanso", "KeePass")
+$ToStart = @(
+    @("$ScoopApps\autohotkey\current\AutoHotkeyU64.exe", "$Documents\AutoHotkey.ahk"),
+    @("$ScoopApps\keepass\current\KeePass.exe", ""),
+    @("$ScoopApps\espanso\current\espanso.exe", "start")
+)
 
 #Backups
 $FFSync = "$Env:ProgramFiles\FreeFileSync\FreeFileSync.exe"
@@ -130,7 +134,9 @@ Foreach ($Package in $Packages) {
 scoop export | Out-File $Documents\Backup\Scoop.txt
 
 # Start processes
-$ToStart | ForEach-Object { & $_ }
+$ToStart | ForEach-Object {
+    Start-Process -FilePath $_[0] -ArgumentList $_[1] -RedirectStandardOutput "NUL"
+}
 
 # Sync files
 Write-ColoredOutput "`nCopying Files." Magenta
@@ -162,4 +168,4 @@ if ($ShutdownDelay) {
     Start-Sleep -Seconds ($ShutdownDelay * 60) && Stop-Computer -Force
 }
 
-return $ExitCode
+exit $ExitCode
