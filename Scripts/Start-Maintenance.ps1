@@ -146,13 +146,20 @@ Foreach ($Destination in $SyncFiles.Keys) {
 }
 
 # Backup
-Write-ColoredOutput "`nRunning Backup." Magenta
+Write-ColoredOutput "`nRunning Backups." Magenta
 $Process = Start-Process $FFSync -ArgumentList `
     "$Documents\Server-Local.ffs_batch" -Wait -PassThru
 if ($Process.ExitCode) {
     Write-ColoredOutput `
-        "`nError while running backup (Error $($Process.ExitCode))." Red
+        "`nError while running server backup (Error $($Process.ExitCode))." Red
     $ExitCode += 1000
+}
+$Process = Start-Process $FFSync -ArgumentList `
+    "$Documents\OneDrive-Server.ffs_batch" -Wait -PassThru
+if ($Process.ExitCode) {
+    Write-ColoredOutput `
+        "`nError while running backup (Error $($Process.ExitCode))." Red
+    $ExitCode += 10000
 }
 
 
