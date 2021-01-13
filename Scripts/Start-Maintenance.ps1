@@ -12,10 +12,10 @@
     None
 
 .NOTES
-    Version:        2.0
+    Version:        2.1
     Author:         Robert Poulin
     Creation Date:  2020-02-24
-    Updated:        2020-06-05
+    Updated:        2021-01-13
     License:        MIT
 
 #>
@@ -115,7 +115,7 @@ try {
 }
 catch {
     Write-ColoredOutput "`nError while cleaning Scoop." Red
-    $ExitCode += 100
+    $ExitCode += 1
 }
 Write-ColoredOutput "`nUpdating Scoop Packages." Magenta
 $Packages = scoop export |
@@ -128,7 +128,7 @@ Foreach ($Package in $Packages) {
     }
     catch {
         Write-ColoredOutput "Error while updating $Package from Scoop." Red
-        $ExitCode += 1
+        $ExitCode += 2
     }
 }
 scoop export | Out-File $Documents\Backup\Scoop.txt
@@ -140,9 +140,10 @@ $ToStart | ForEach-Object {
 
 # Sync files
 Write-ColoredOutput "`nCopying Files." Magenta
-Foreach ($Destination in $SyncFiles.Keys) {
-    $SyncFiles[$Destination] |
-        ForEach-Object { Copy-UpdatedItem $_ "$Destination\$($_.Name)" }
+ForEach ($Destination in $SyncFiles.Keys) {
+    ForEach ($File in $SyncFiles[$Destination]) {
+        Copy-UpdatedItem $File "$Destination\$($File.Name)"
+    }
 }
 
 # Backup
@@ -152,14 +153,7 @@ $Process = Start-Process $FFSync -ArgumentList `
 if ($Process.ExitCode) {
     Write-ColoredOutput `
         "`nError while running server backup (Error $($Process.ExitCode))." Red
-    $ExitCode += 1000
-}
-$Process = Start-Process $FFSync -ArgumentList `
-    "$Documents\OneDrive-Server.ffs_batch" -Wait -PassThru
-if ($Process.ExitCode) {
-    Write-ColoredOutput `
-        "`nError while running backup (Error $($Process.ExitCode))." Red
-    $ExitCode += 10000
+    $ExitCode += 4
 }
 
 
