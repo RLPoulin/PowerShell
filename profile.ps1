@@ -16,8 +16,8 @@
 Set-StrictMode -Version Latest
 
 Import-Module PSReadLine
-Import-Module posh-git
-Import-Module oh-my-posh
+# Import-Module posh-git
+# Import-Module oh-my-posh
 Import-Module Get-ChildItemColor
 Import-Module MyFunctions
 Import-Module DevFunctions
@@ -25,14 +25,14 @@ Import-Module DevFunctions
 
 # Module Options
 
-Set-Theme Avit
-$ThemeSettings.Options.OriginSymbols = $True
-$ThemeSettings.Colors.AdminIconForegroundColor = "Red"
-$ThemeSettings.Colors.PromptForegroundColor = "Blue"
-$ThemeSettings.Colors.VirtualEnvBackgroundColor = "Black"
-$ThemeSettings.Colors.VirtualEnvForegroundColor = "Green"
+# Set-Theme Avit
+# $ThemeSettings.Options.OriginSymbols = $True
+# $ThemeSettings.Colors.AdminIconForegroundColor = "Red"
+# $ThemeSettings.Colors.PromptForegroundColor = "Blue"
+# $ThemeSettings.Colors.VirtualEnvBackgroundColor = "Black"
+# $ThemeSettings.Colors.VirtualEnvForegroundColor = "Green"
 
-Set-PSReadlineOption -ExtraPromptLineCount 1
+# Set-PSReadlineOption -ExtraPromptLineCount 1
 Set-PSReadlineKeyHandler -Key UpArrow -Function HistorySearchBackward
 Set-PSReadlineKeyHandler -Key DownArrow -Function HistorySearchForward
 Set-PSReadlineKeyHandler -Chord 'Shift+Tab' -Function Complete
@@ -41,7 +41,7 @@ Set-PSReadlineKeyHandler -Key Tab -Function MenuComplete
 
 # Variables for local machine
 
-$Env:EDITOR = (Get-Command atom).Name
+$Env:EDITOR = (Get-Command nvim).Name
 
 $DefaultUser = $Env:USERNAME
 $CodeFolder = "$Home\Python"
@@ -113,11 +113,12 @@ Set-Alias -Name la -Value Get-HiddenChildItem -Option AllScope
 Set-Alias -Name ll -Value Get-ChildItem -Option AllScope
 Set-Alias -Name ls -Value Get-ChildItemColorFormatWide -Option AllScope
 
-Set-Alias -Name edit -Value $Env:EDITOR -Option AllScope
 Set-Alias -Name grep -Value rg -Option AllScope
 
 
 # On Start
+
+Invoke-Expression (&starship init powershell)
 
 Write-ColoredOutput -ForegroundColor Gray -BackgroundColor Black -KeepColors
 Write-ColoredOutput "Powershell $($PSVersionTable.PSEdition) " Yellow -NoNewline
