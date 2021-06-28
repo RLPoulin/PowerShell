@@ -3,10 +3,10 @@
     My PowerShell profile.
 
 .NOTES
-    Version:        3.0
+    Version:        4.0
     Author:         Robert Poulin
     Creation Date:  2016-06-09
-    Updated:        2020-05-27
+    Updated:        2021-06-27
     License:        MIT
 
 #>
@@ -16,8 +16,7 @@
 Set-StrictMode -Version Latest
 
 Import-Module PSReadLine
-# Import-Module posh-git
-# Import-Module oh-my-posh
+Import-Module posh-git
 Import-Module Get-ChildItemColor
 Import-Module MyFunctions
 Import-Module DevFunctions
@@ -25,14 +24,6 @@ Import-Module DevFunctions
 
 # Module Options
 
-# Set-Theme Avit
-# $ThemeSettings.Options.OriginSymbols = $True
-# $ThemeSettings.Colors.AdminIconForegroundColor = "Red"
-# $ThemeSettings.Colors.PromptForegroundColor = "Blue"
-# $ThemeSettings.Colors.VirtualEnvBackgroundColor = "Black"
-# $ThemeSettings.Colors.VirtualEnvForegroundColor = "Green"
-
-# Set-PSReadlineOption -ExtraPromptLineCount 1
 Set-PSReadlineKeyHandler -Key UpArrow -Function HistorySearchBackward
 Set-PSReadlineKeyHandler -Key DownArrow -Function HistorySearchForward
 Set-PSReadlineKeyHandler -Chord 'Shift+Tab' -Function Complete
@@ -41,12 +32,11 @@ Set-PSReadlineKeyHandler -Key Tab -Function MenuComplete
 
 # Variables for local machine
 
-$Env:EDITOR = (Get-Command nvim).Name
+$Editor = "$Env:ProgramFiles\Notepad++\notepad++.exe"
 
 $DefaultUser = $Env:USERNAME
-$CodeFolder = "$Home\Python"
+$CodeFolder = "$Home\Code"
 $PSFolder = $PSScriptRoot
-$TerminalProfiles = "$Env:LOCALAPPDATA\Microsoft\Windows Terminal\settings.json"
 
 
 # Functions
@@ -60,10 +50,9 @@ function Edit-Profile() {
 
     $Files = @(
         $PROFILE.CurrentUserAllHosts,
-        $PROFILE.CurrentUserCurrentHost,
-        $TerminalProfiles
+        $PROFILE.CurrentUserCurrentHost
     ) | Where-Object { Test-Path $_ }
-    if ($Files) { & $Env:EDITOR $Files }
+    if ($Files) { & $Editor $Files }
 }
 
 function Set-LocationHome {

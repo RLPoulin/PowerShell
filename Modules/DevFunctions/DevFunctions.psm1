@@ -3,10 +3,10 @@
     The functions I use for sofware development.
 
 .NOTES
-    Version:        1.1
+    Version:        2.0
     Author:         Robert Poulin
     Creation Date:  2019-12-30
-    Updated:        2020-03-17
+    Updated:        2021-06-27
     License:        MIT
 
 #>
@@ -68,35 +68,6 @@ function Enter-VirtualEnvironment {
     }
     Show-PythonSource
 }
-
-
-function Get-VirtualEnvName {
-    [CmdletBinding()]
-    [OutputType([String])]
-    [Alias()]
-
-    Param()
-
-    $Python = (Get-Command python).Source.Split("\")
-    if ($Python -contains "pyenv") {
-        & pyenv global
-    }
-    elseif ($Python -contains ".venv") {
-        $Python[-4]
-    }
-    elseif ($Python -contains "miniconda3") {
-        $Env:CONDA_DEFAULT_ENV
-    }
-    elseif ($Python -contains "scoop") {
-        "Scoop"
-    }
-    else {
-        "???"
-    }
-}
-
-
-function Invoke-Pip() { & python -m pip $Args }
 
 
 function Send-GitCommit {
@@ -182,8 +153,3 @@ function Test-VirtualEnv {
 
     [Boolean] (Get-Command python -ErrorAction SilentlyContinue)
 }
-
-
-# Aliases
-
-Set-Alias -Name pip -Value Invoke-Pip -Option AllScope -Scope Global
