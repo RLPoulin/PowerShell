@@ -49,8 +49,8 @@ $ToStart = @(
 $FFSync = "$Env:ProgramFiles\FreeFileSync\FreeFileSync.exe"
 $SyncFiles = @{
     "$Documents\Backup" = Get-Item @(
-            "\\server.bioastratech.com\Public\Time sheets\2019\Robert 2019.xlsm",
             "\\server.bioastratech.com\Public\Time sheets\2020\Robert 2020.xlsm",
+            "\\server.bioastratech.com\Public\Time sheets\2021\Robert 2021.xlsm",
             "$Env:LocalAppData\Microsoft\Windows Terminal\settings.json"
     );
     "$ScoopApps\notepadplusplus\current" = Get-Item "$Documents\Backup\NppShell64.dll"

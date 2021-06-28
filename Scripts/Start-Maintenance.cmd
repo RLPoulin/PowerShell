@@ -1,7 +1,7 @@
 @REM Batch script to run Start-Maintenance.ps1
 @ECHO off
 
-IF [%~1]==[] (SET DELAY=10) ELSE (SET DELAY=%~1)
+IF [%~1]==[] (SET DELAY=0) ELSE (SET DELAY=%~1)
 
 ECHO.
 ECHO Updating Scoop
