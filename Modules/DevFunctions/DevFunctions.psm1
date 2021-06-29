@@ -3,10 +3,10 @@
     The functions I use for sofware development.
 
 .NOTES
-    Version:        2.0
+    Version:        2.1
     Author:         Robert Poulin
     Creation Date:  2019-12-30
-    Updated:        2021-06-27
+    Updated:        2021-06-29
     License:        MIT
 
 #>
@@ -53,7 +53,7 @@ function Enter-Project {
 function Enter-VirtualEnvironment {
     [CmdletBinding()]
     [OutputType()]
-    [Alias("venv")]
+    [Alias("act")]
 
     Param(
         [Parameter(Position=1, ValueFromPipeline)]
@@ -97,6 +97,11 @@ function Set-PyEnv {
     [Alias()]
 
     Param([String] $Version)
+
+    if (!(Get-Command pyenv -ErrorAction SilentlyContinue)) {
+        Write-Verbose "Pyenv not installed."
+        return
+    }
 
     $Versions = (& pyenv versions) | ForEach-Object { $_.Trim().Split()[0] }
     if ($Versions -contains $Version) {
