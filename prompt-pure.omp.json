@@ -45,8 +45,8 @@
         {
           "foreground": "default",
           "properties": {
-            "branch_ahead_icon": "<blue>⇡ </>",
-            "branch_behind_icon": "<blue>⇣ </>",
+            "branch_ahead_icon": "<lightGreen>⇡ </>",
+            "branch_behind_icon": "<lightGreen>⇣ </>",
             "branch_icon": "",
             "display_stash_count": true,
             "display_status": true,
