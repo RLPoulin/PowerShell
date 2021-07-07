@@ -3,10 +3,10 @@
     My PowerShell profile.
 
 .NOTES
-    Version:        4.0
+    Version:        4.1
     Author:         Robert Poulin
     Creation Date:  2016-06-09
-    Updated:        2021-06-27
+    Updated:        2021-07-07
     License:        MIT
 
 #>
@@ -17,26 +17,26 @@ Set-StrictMode -Version Latest
 
 Import-Module PSReadLine
 Import-Module posh-git
+Import-Module oh-my-posh
 Import-Module Get-ChildItemColor
 Import-Module MyFunctions
 Import-Module DevFunctions
 
 
+# Variables for local machine
+
+$Editor = "code.cmd"
+$CodeFolder = "$Home\Code"
+$PSFolder = $PSScriptRoot
+
+
 # Module Options
 
+Set-PoshPrompt -Theme "$PSFolder\prompt-pure.omp.json"
 Set-PSReadlineKeyHandler -Key UpArrow -Function HistorySearchBackward
 Set-PSReadlineKeyHandler -Key DownArrow -Function HistorySearchForward
 Set-PSReadlineKeyHandler -Chord 'Shift+Tab' -Function Complete
 Set-PSReadlineKeyHandler -Key Tab -Function MenuComplete
-
-
-# Variables for local machine
-
-$Editor = "$Env:ProgramFiles\Notepad++\notepad++.exe"
-
-$DefaultUser = $Env:USERNAME
-$CodeFolder = "$Home\Code"
-$PSFolder = $PSScriptRoot
 
 
 # Functions
@@ -107,11 +107,9 @@ Set-Alias -Name grep -Value rg -Option AllScope
 
 # On Start
 
-Invoke-Expression (&starship init powershell)
-
 Write-ColoredOutput -ForegroundColor Gray -BackgroundColor Black -KeepColors
 Write-ColoredOutput "Powershell $($PSVersionTable.PSEdition) " Yellow -NoNewline
 Write-ColoredOutput "version " White -NoNewline
 Write-ColoredOutput "$($PSVersionTable.PSVersion) " Yellow -NoNewline
 Write-ColoredOutput "on $($PSVersionTable.OS)" White
-Write-ColoredOutput "`nHi $DefaultUser!`n" Magenta
+Write-ColoredOutput "`nHi Bob!`n" Magenta
