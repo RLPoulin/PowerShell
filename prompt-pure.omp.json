@@ -6,7 +6,7 @@
       "newline": true,
       "segments": [
         {
-          "foreground": "#BF616A",
+          "foreground": "red",
           "properties": {
             "prefix": "",
             "root_icon": "Admin"
@@ -15,8 +15,12 @@
           "type": "root"
         },
         {
-          "foreground": "#81A1C1",
+          "foreground": "lightCyan",
           "properties": {
+            "enable_hyperlink": true,
+            "mapped_locations": {
+              "/home/bob/winhome": "\uF17A"
+            },
             "prefix": "",
             "style": "full"
           },
@@ -30,18 +34,27 @@
       "alignment": "left",
       "segments": [
         {
-          "foreground": "#6C6C6C",
+          "foreground": "green",
           "properties": {
-            "branch_ahead_icon": "<#88C0D0>⇡ </>",
-            "branch_behind_icon": "<#88C0D0>⇣ </>",
+            "display_mode": "context",
+            "prefix": " \uE235 "
+          },
+          "style": "plain",
+          "type": "python"
+        },
+        {
+          "foreground": "default",
+          "properties": {
+            "branch_ahead_icon": "<blue>⇡ </>",
+            "branch_behind_icon": "<blue>⇣ </>",
             "branch_icon": "",
             "display_stash_count": true,
             "display_status": true,
             "display_status_detail": true,
             "display_upstream_icon": true,
             "github_icon": "",
-            "local_working_icon": "<#FFAFD7>*</>",
-            "prefix": ""
+            "local_working_icon": "<lightMagenta> *</>",
+            "prefix": "\uE725 "
           },
           "style": "plain",
           "type": "git"
@@ -50,29 +63,61 @@
       "type": "prompt"
     },
     {
-      "alignment": "left",
+      "alignment": "right",
       "segments": [
         {
-          "foreground": "#A3BE8C",
           "properties": {
-            "style": "austin"
+            "always_numeric": true,
+            "error_color": "red",
+            "error_icon": "\uF06A ",
+            "prefix": ""
+          },
+          "style": "plain",
+          "type": "exit"
+        },
+        {
+          "foreground": "yellow",
+          "properties": {
+            "prefix": "\uFA89 ",
+            "style": "round",
+            "threshold": 2000
           },
           "style": "plain",
           "type": "executiontime"
+        },
+        {
+          "foreground": "lightBlue",
+          "properties": {
+            "prefix": "\uF017 ",
+            "time_format": "15:04"
+          },
+          "style": "plain",
+          "type": "time"
         }
       ],
-      "type": "prompt"
+      "type": "rprompt"
     },
     {
       "alignment": "left",
       "newline": true,
       "segments": [
         {
-          "foreground": "#B48EAD",
+          "foreground": "magenta",
+          "properties": {
+            "prefix": "",
+            "windows": "\uF17A",
+            "wsl": "",
+            "wsl_separator": ""
+          },
+          "style": "plain",
+          "type": "os"
+        },
+        {
+          "foreground": "lightMagenta",
           "properties": {
             "always_enabled": true,
             "display_exit_code": false,
-            "error_color": "#BF616A",
+            "error_color": "lightRed",
             "prefix": "❯"
           },
           "style": "plain",

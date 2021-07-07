@@ -29,6 +29,8 @@ $Editor = "code.cmd"
 $CodeFolder = "$Home\Code"
 $PSFolder = $PSScriptRoot
 
+$Env:VIRTUAL_ENV_DISABLE_PROMPT = 1
+$Env:POSH_GIT_ENABLED = 1
 
 # Module Options
 
