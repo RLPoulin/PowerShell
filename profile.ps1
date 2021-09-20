@@ -78,7 +78,13 @@ function Set-LocationItem {
     )
 
     if ($Path) {
-        Push-Location $Path -StackName "Set-LocationItem"
+        if (Test-Path $Path) {
+            Push-Location $Path -StackName "Set-LocationItem"
+        }
+        else {
+            Write-ColoredOutput "Invalid path: $Path" -ForegroundColor Red
+            return
+        }
     }
     else {
         Pop-Location -StackName "Set-LocationItem"
