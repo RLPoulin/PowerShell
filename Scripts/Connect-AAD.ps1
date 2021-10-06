@@ -1,9 +1,9 @@
 <#
 .Synopsis
-    Connect to Exchange Online PowerShell
+    Connect to Azure Active Directory PowerShell
 
 .DESCRIPTION
-    This script connects to an Exchange Online PowerShell session.
+    This script connects to an Azure Active Directory PowerShell session.
 
 .INPUTS
     None
@@ -12,18 +12,18 @@
     None
 
 .NOTES
-    Version:        1.1
+    Version:        1.0
     Author:         Robert Poulin
-    Creation Date:  2021-08-10
+    Creation Date:  2021-10-04
     Updated:        2021-10-04
     License:        MIT
 
 #>
 
 Import-Module MyFunctions
-Import-Module ExchangeOnlineManagement
+Import-Module AzureAD
 
-Connect-ExchangeOnline -ShowBanner
+Connect-AzureAD
 
 if (-not $?) {
     Write-ColoredOutput "Connection failed!" Red
@@ -32,4 +32,4 @@ if (-not $?) {
 
 Write-ColoredOutput "Connected!" Green
 Write-Output "Use 'disconnect' to disconnect.`n"
-Set-Alias -Name "disconnect" -Value "Disconnect-ExchangeOnline" -Scope Global
+Set-Alias -Name "disconnect" -Value "Disconnect-AzureAD" -Scope Global
