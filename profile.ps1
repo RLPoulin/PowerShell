@@ -109,7 +109,8 @@ Set-Alias -Name l -Value Get-ChildItemColorFormatWide -Option AllScope
 Set-Alias -Name la -Value Get-HiddenChildItem -Option AllScope
 Set-Alias -Name ll -Value Get-ChildItem -Option AllScope
 Set-Alias -Name ls -Value Get-ChildItemColorFormatWide -Option AllScope
-Set-Alias -Name gc -Value Get-Command -Option AllScope
+
+Set-Alias -Name what -Value Get-Command -Option AllScope
 
 Set-Alias -Name grep -Value rg -Option AllScope
 Set-Alias -Name cat -Value bat -Option AllScope
