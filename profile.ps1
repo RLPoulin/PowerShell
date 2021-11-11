@@ -3,10 +3,10 @@
     My PowerShell profile.
 
 .NOTES
-    Version:        4.1
+    Version:        4.2
     Author:         Robert Poulin
     Creation Date:  2016-06-09
-    Updated:        2021-07-07
+    Updated:        2021-11-11
     License:        MIT
 
 #>
@@ -26,7 +26,7 @@ Import-Module DevFunctions
 # Variables for local machine
 
 $Editor = "code.cmd"
-$CodeFolder = "$Home\Code"
+$Env:CodeFolder = "$Home\Code"
 $PSFolder = $PSScriptRoot
 
 $Env:VIRTUAL_ENV_DISABLE_PROMPT = 1

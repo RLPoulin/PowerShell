@@ -3,10 +3,10 @@
     The functions I use for sofware development.
 
 .NOTES
-    Version:        2.1
+    Version:        2.2
     Author:         Robert Poulin
     Creation Date:  2019-12-30
-    Updated:        2021-06-29
+    Updated:        2021-11-11
     License:        MIT
 
 #>
@@ -36,16 +36,17 @@ function Enter-Project {
         Set-Location $Project
     }
     else {
-        Join-Path $CodeFolder $Project | Set-Location -ErrorAction SilentlyContinue
+        Join-Path $Env:CodeFolder $Project | Set-Location -ErrorAction SilentlyContinue
     }
 
-    Write-ColoredOutput "`n   Python Environment:`n" Blue
+    Write-ColoredOutput "`n   Python Environment:`n" Magenta
     Enter-VirtualEnvironment $Project
 
     if (Test-Path ".git") {
-        Write-ColoredOutput "`n   Git Status:`n" Blue
-        Show-GitStatus
+        Write-ColoredOutput "`n   Git Status:`n" Magenta
+        & git status --show-stash
     }
+
     Get-ChildItemColorFormatWide
 }
 
@@ -63,9 +64,10 @@ function Enter-VirtualEnvironment {
     if (Test-Path ".venv\Scripts\Activate.ps1") {
         & ".venv\Scripts\Activate.ps1"
     }
-    else {
-        Set-PyEnv $Environment
+    elseif ((Test-Path "pyproject.toml") -and "[tool.poetry]" -in (get-content "pyproject.toml")) {
+        . "$(poetry env info -p)\Scripts\activate.ps1"
     }
+
     Show-PythonSource
 }
 
@@ -91,37 +93,6 @@ function Send-GitCommit {
 }
 
 
-function Set-PyEnv {
-    [CmdletBinding()]
-    [OutputType()]
-    [Alias()]
-
-    Param([String] $Version)
-
-    if (!(Get-Command pyenv -ErrorAction SilentlyContinue)) {
-        Write-Verbose "Pyenv not installed."
-        return
-    }
-
-    $Versions = (& pyenv versions) | ForEach-Object { $_.Trim().Split()[0] }
-    if ($Versions -contains $Version) {
-        & pyenv global $Version
-    }
-    & pyenv rehash
-}
-
-
-function Show-GitStatus {
-    [CmdletBinding()]
-    [OutputType()]
-    [Alias("gits")]
-
-    Param()
-
-    & git status --show-stash
-}
-
-
 function Show-PythonSource {
     [CmdletBinding()]
     [OutputType()]
@@ -135,26 +106,4 @@ function Show-PythonSource {
     Write-ColoredOutput $PyPath Green -NoNewline
     Write-ColoredOutput $PyExe DarkGreen
     & $Python "-VV"
-}
-
-
-function Submit-GitCommit {
-    [CmdletBinding()]
-    [OutputType()]
-    [Alias("gitc")]
-
-    Param([String] $Message)
-
-    & git commit --all --message="$Message"
-}
-
-
-function Test-VirtualEnv {
-    [CmdletBinding()]
-    [OutputType([Boolean])]
-    [Alias()]
-
-    Param()
-
-    [Boolean] (Get-Command python -ErrorAction SilentlyContinue)
 }
