@@ -68,6 +68,18 @@ function Enter-VirtualEnvironment {
     Show-PythonSource
 }
 
+function Exit-VirtualEnvironment {
+    [CmdletBinding()]
+    [OutputType()]
+    [Alias("deact")]
+
+    Param()
+
+    if (Test-Path function:deactivate) {
+        deactivate
+    }
+}
+
 
 function Send-GitCommit {
     [CmdletBinding()]
