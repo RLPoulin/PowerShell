@@ -3,10 +3,10 @@
     My general-use functions.
 
 .NOTES
-    Version:        2.1
+    Version:        2.2
     Author:         Robert Poulin
     Creation Date:  2016-06-09
-    Updated:        2020-03-24
+    Updated:        2021-11-11
     License:        MIT
 
 #>
@@ -287,6 +287,24 @@ function Show-ColorPalette {
     )
     ForEach ($Color in $Colors) {
         Write-ColoredOutput "███████████████ $Color" $Color
+    }
+}
+
+
+function Show-Path {
+    [CmdletBinding()]
+    [OutputType()]
+    [Alias()]
+
+    Param()
+
+    foreach ($Path in (Get-Path)) {
+        if (Test-Path $Path) {
+            Write-Output $Path
+        }
+        else {
+            Write-ColoredOutput "$Path" Red
+        }
     }
 }
 

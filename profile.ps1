@@ -3,7 +3,7 @@
     My PowerShell profile.
 
 .NOTES
-    Version:        4.2
+    Version:        5.0
     Author:         Robert Poulin
     Creation Date:  2016-06-09
     Updated:        2021-11-11
@@ -17,8 +17,8 @@ Set-StrictMode -Version Latest
 
 Import-Module PSReadLine
 Import-Module posh-git
-Import-Module oh-my-posh
-Import-Module Get-ChildItemColor
+Import-Module Terminal-Icons
+
 Import-Module MyFunctions
 Import-Module DevFunctions
 
@@ -32,11 +32,17 @@ $PSFolder = $PSScriptRoot
 $Env:VIRTUAL_ENV_DISABLE_PROMPT = 1
 $Env:POSH_GIT_ENABLED = 1
 
+
+# Set Prompt
+
+oh-my-posh --init --shell pwsh --config "$PSFolder\prompt-pure.omp.json" | Invoke-Expression
+
+
 # Module Options
 
-Set-PoshPrompt -Theme "$PSFolder\prompt-pure.omp.json"
-Set-PSReadlineKeyHandler -Key UpArrow -Function HistorySearchBackward
-Set-PSReadlineKeyHandler -Key DownArrow -Function HistorySearchForward
+Set-PSReadLineOption -EditMode Windows
+Set-PSReadLineOption -PredictionSource History
+Set-PSReadLineOption -PredictionViewStyle ListView
 Set-PSReadlineKeyHandler -Chord 'Shift+Tab' -Function Complete
 Set-PSReadlineKeyHandler -Key Tab -Function MenuComplete
 
@@ -57,63 +63,44 @@ function Edit-Profile() {
     if ($Files) { & $Editor $Files }
 }
 
-function Set-LocationHome {
-    [CmdletBinding()]
-    [OutputType()]
-    [Alias("~")]
-
-    Param()
-
-    Set-LocationItem $HOME
-}
-
-function Set-LocationItem {
-    [CmdletBinding()]
-    [OutputType()]
-    [Alias("cd")]
-
-    Param(
-        [Parameter(Position=1, ValueFromPipeline)]
-        [Object] $Path
-    )
-
-    if ($Path) {
-        if (Test-Path $Path) {
-            Push-Location $Path -StackName "Set-LocationItem"
-        }
-        else {
-            Write-ColoredOutput "Invalid path: $Path" -ForegroundColor Red
-            return
-        }
-    }
-    else {
-        Pop-Location -StackName "Set-LocationItem"
-    }
-    Get-ChildItemColorFormatWide
-}
-
 
 # Proxies
 
 New-ProxyCommand Get-ChildItem "Get-HiddenChildItem" | Out-Null
 $PSDefaultParameterValues["Get-HiddenChildItem`:Force"] = $True
 
-New-ProxyCommand Set-LocationItem "Set-LocationUp" | Out-Null
+New-ProxyCommand Set-Location "Set-LocationUp" | Out-Null
 $PSDefaultParameterValues["Set-LocationUp`:Path"] = ".."
+Set-Alias -Name .. -Value Set-LocationUp -Option AllScope
+
+New-ProxyCommand Set-Location "Set-LocationHome" | Out-Null
+$PSDefaultParameterValues["Set-LocationHome`:Path"] = $HOME
+Set-Alias -Name ~ -Value Set-LocationHome -Option AllScope
 
 
 # Aliases
 
-Set-Alias -Name .. -Value Set-LocationUp -Option AllScope
-Set-Alias -Name l -Value Get-ChildItemColorFormatWide -Option AllScope
 Set-Alias -Name la -Value Get-HiddenChildItem -Option AllScope
 Set-Alias -Name ll -Value Get-ChildItem -Option AllScope
-Set-Alias -Name ls -Value Get-ChildItemColorFormatWide -Option AllScope
 
 Set-Alias -Name what -Value Get-Command -Option AllScope
 
 Set-Alias -Name grep -Value rg -Option AllScope
 Set-Alias -Name cat -Value bat -Option AllScope
+
+
+# Argument Completers
+
+Register-ArgumentCompleter -Native -CommandName winget -ScriptBlock {
+    param($wordToComplete, $commandAst, $cursorPosition)
+
+    [Console]::InputEncoding = [Console]::OutputEncoding = $OutputEncoding = [System.Text.Utf8Encoding]::new()
+    $Local:word = $wordToComplete.Replace('"', '""')
+    $Local:ast = $commandAst.ToString().Replace('"', '""')
+    winget complete --word="$Local:word" --commandline "$Local:ast" --position $cursorPosition | ForEach-Object {
+        [System.Management.Automation.CompletionResult]::new($_, $_, 'ParameterValue', $_)
+    }
+}
 
 
 # On Start

@@ -3,7 +3,7 @@
     The functions I use for sofware development.
 
 .NOTES
-    Version:        2.2
+    Version:        2.3
     Author:         Robert Poulin
     Creation Date:  2019-12-30
     Updated:        2021-11-11
@@ -16,7 +16,6 @@
 Set-StrictMode -Version Latest
 
 Import-Module posh-git -NoClobber -Cmdlet Get-GitStatus
-Import-Module Get-ChildItemColor -NoClobber
 Import-Module MyFunctions -NoClobber -Cmdlet Write-ColoredOutput
 
 
@@ -46,8 +45,6 @@ function Enter-Project {
         Write-ColoredOutput "`n   Git Status:`n" Magenta
         & git status --show-stash
     }
-
-    Get-ChildItemColorFormatWide
 }
 
 
