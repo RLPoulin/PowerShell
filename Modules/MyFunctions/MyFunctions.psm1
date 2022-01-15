@@ -309,6 +309,42 @@ function Show-Path {
 }
 
 
+function Start-Shutdown {
+    [CmdletBinding()]
+    [OutputType()]
+    [Alias()]
+
+    Param(
+        [Parameter(Position=1, Mandatory, ValueFromPipeline)]
+        [ValidateNotNullOrEmpty()]
+        [String] $DateTime,
+
+        [Parameter()]
+        [Switch] $Restart
+    )
+
+    $ShutdownDateTime = Get-Date -Date $DateTime
+    $CurrentDateTime = Get-Date
+    $ShutdownDelay = ($ShutdownDateTime - $CurrentDateTime).TotalSeconds
+
+    if ($ShutdownDelay -lt 0) { Throw "Invalid shutdown time: $ShutdownDateTime" }
+
+    for ( $i = 1; $i -le $ShutdownDelay; $i++ ) {
+        Write-Progress -Activity "Waiting for shutdown at: $ShutdownDateTime" `
+            -SecondsRemaining ($ShutdownDelay - $i) `
+            -PercentComplete (100 * $i / $ShutdownDelay) `
+            -Status "Waiting"
+        Start-Sleep -Seconds 1
+    }
+
+    Write-Progress -Activity "Waiting for shutdown time: $ShutdownDateTime" -Complete
+
+    if ($Restart) { Restart-Computer -Force }
+    else {Stop-Computer -Force}
+
+}
+
+
 <#
 .Synopsis
     Test for Administrator privileges.
