@@ -3,10 +3,10 @@
     The functions I use for sofware development.
 
 .NOTES
-    Version:        2.3
+    Version:        2.4
     Author:         Robert Poulin
     Creation Date:  2019-12-30
-    Updated:        2021-11-11
+    Updated:        2022-03-11
     License:        MIT
 
 #>
@@ -81,12 +81,28 @@ function Exit-VirtualEnvironment {
 }
 
 
+
+function Receive-GitCommit {
+    [CmdletBinding()]
+    [OutputType()]
+    [Alias("pull")]
+
+    Param()
+
+    # $Status = Get-GitStatus
+
+    git pull --all --autostash
+}
+
+
 function Send-GitCommit {
     [CmdletBinding()]
     [OutputType()]
-    [Alias("gitp")]
+    [Alias("push")]
 
     Param()
+
+    Get-ChildItem -Path .git -Filter *VOSTRO* -Recurse | Remove-Item
 
     $Status = Get-GitStatus
     if ($Status.HasWorking -or $Status.HasUntracked) {
@@ -97,7 +113,7 @@ function Send-GitCommit {
 
     Foreach ($Remote in (Invoke-Expression "git remote")) {
         Write-ColoredOutput "`nPushing to $Remote" -ForegroundColor Magenta
-        & git push "$Remote" --all --force-with-lease
+        & git push "$Remote" --all --force-with-lease --tags
     }
 }
 
