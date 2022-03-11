@@ -3,10 +3,10 @@
     My general-use functions.
 
 .NOTES
-    Version:        2.2
+    Version:        2.3
     Author:         Robert Poulin
     Creation Date:  2016-06-09
-    Updated:        2021-11-11
+    Updated:        2022-03-11
     License:        MIT
 
 #>
@@ -453,6 +453,35 @@ function Update-TextFile {
 
     }
 
+}
+
+
+function Update-Software {
+    [CmdletBinding()]
+    [OutputType()]
+    [Alias("upd")]
+
+    Param (
+        [Parameter()]
+        [Switch] $Shutdown
+    )
+
+    $Color = "Cyan"
+
+    Write-ColoredOutput "`nUpdating Winget applications...`n" $Color
+    & sudo winget upgrade --all --silent
+
+    Write-ColoredOutput "`nUpdating Scoop...`n" $Color
+    & scoop update
+    & scoop cleanup *
+
+    Write-ColoredOutput "`nUpdating Scoop applications...`n" $Color
+    & scoop update *
+
+    Write-ColoredOutput "`nUpdating Powershell modules...`n"
+    Update-Module -Scope CurrentUser -AllowPrerelease -AcceptLicense
+
+    Write-ColoredOutput "`nDone!" $Color
 }
 
 
