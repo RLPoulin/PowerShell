@@ -102,7 +102,7 @@ function Send-GitCommit {
 
     Param()
 
-    Get-ChildItem -Path .git -Filter *VOSTRO* -Recurse | Remove-Item
+    Get-ChildItem -Path .git -Filter FETCH*VOSTRO* -Recurse | Remove-Item
 
     $Status = Get-GitStatus
     if ($Status.HasWorking -or $Status.HasUntracked) {
@@ -113,7 +113,8 @@ function Send-GitCommit {
 
     Foreach ($Remote in (Invoke-Expression "git remote")) {
         Write-ColoredOutput "`nPushing to $Remote" -ForegroundColor Magenta
-        & git push "$Remote" --all --force-with-lease --tags
+        & git push "$Remote" --all --force-with-lease
+        & git push "$Remote" --tags
     }
 }
 
