@@ -479,7 +479,7 @@ function Update-Software {
     & scoop update *
 
     Write-ColoredOutput "`nUpdating Powershell modules...`n"
-    Update-Module -Scope CurrentUser -AllowPrerelease -AcceptLicense
+    Update-Module -Scope CurrentUser -AcceptLicense
 
     Write-ColoredOutput "`nDone!" $Color
 }
