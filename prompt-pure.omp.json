@@ -8,10 +8,10 @@
         {
           "foreground": "red",
           "properties": {
-            "root_icon": "Admin",
-            "template": "\uf0e7 "
+            "root_icon": "Admin"
           },
           "style": "plain",
+          "template": "\uf0e7 ",
           "type": "root"
         },
         {
@@ -20,10 +20,10 @@
             "mapped_locations": {
               "/home/bob/winhome": "\uf17a"
             },
-            "style": "full",
-            "template": "{{ .Path }} "
+            "style": "full"
           },
           "style": "plain",
+          "template": "{{ .Path }} ",
           "type": "path"
         }
       ],
@@ -35,10 +35,10 @@
         {
           "foreground": "green",
           "properties": {
-            "display_mode": "context",
-            "template": " \ue235 {{ if .Error }}{{ .Error }}{{ else }}{{ if .Venv }}{{ .Venv }} {{ end }}{{ .Full }}{{ end }} "
+            "display_mode": "context"
           },
           "style": "plain",
+          "template": " \ue235 {{ if .Error }}{{ .Error }}{{ else }}{{ if .Venv }}{{ .Venv }} {{ end }}{{ .Full }}{{ end }} ",
           "type": "python"
         },
         {
@@ -50,10 +50,10 @@
             "fetch_stash_count": true,
             "fetch_status": true,
             "fetch_upstream_icon": true,
-            "github_icon": "",
-            "template": "\ue725 {{ .HEAD }} {{ .BranchStatus }}{{ if .Working.Changed }}<lightMagenta> *</>{{ .Working.String }}{{ end }}{{ if and (.Staging.Changed) (.Working.Changed) }} |{{ end }}{{ if .Staging.Changed }} \uf046 {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0}} \uf692 {{ .StashCount }}{{ end }}{{ if gt .WorktreeCount 0}} \uf1bb {{ .WorktreeCount }}{{ end }} "
+            "github_icon": ""
           },
           "style": "plain",
+          "template": "\ue725 {{ .HEAD }} {{ .BranchStatus }}{{ if .Working.Changed }}<lightMagenta> *</>{{ .Working.String }}{{ end }}{{ if and (.Staging.Changed) (.Working.Changed) }} |{{ end }}{{ if .Staging.Changed }} \uf046 {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0}} \uf692 {{ .StashCount }}{{ end }}{{ if gt .WorktreeCount 0}} \uf1bb {{ .WorktreeCount }}{{ end }} ",
           "type": "git"
         }
       ],
@@ -66,29 +66,27 @@
           "foreground_templates": [
             "{{ if gt .Code 0 }}red{{ end }}"
           ],
-          "properties": {
-            "template": "{{ if gt .Code 0 }}\uf06a  {{ .Code }}{{ else }}\uf42e{{ end }} "
-          },
           "style": "plain",
+          "template": "{{ if gt .Code 0 }}\uf06a  {{ .Code }}{{ else }}\uf42e{{ end }} ",
           "type": "exit"
         },
         {
           "foreground": "yellow",
           "properties": {
             "style": "round",
-            "template": "\ufa89 {{ .FormattedMs }} ",
             "threshold": 2000
           },
           "style": "plain",
+          "template": "\ufa89 {{ .FormattedMs }} ",
           "type": "executiontime"
         },
         {
           "foreground": "lightBlue",
           "properties": {
-            "template": "\uf017 {{ .CurrentDate | date .Format }} ",
             "time_format": "15:04"
           },
           "style": "plain",
+          "template": "\uf017 {{ .CurrentDate | date .Format }} ",
           "type": "time"
         }
       ],
@@ -101,12 +99,12 @@
         {
           "foreground": "magenta",
           "properties": {
-            "template": "{{ if .WSL }}WSL at {{ end }}{{.Icon}} ",
             "windows": "\uf17a",
             "wsl": "",
             "wsl_separator": ""
           },
           "style": "plain",
+          "template": "{{ if .WSL }}WSL at {{ end }}{{.Icon}} ",
           "type": "os"
         },
         {
@@ -115,18 +113,16 @@
             "{{ if gt .Code 0 }}lightRed{{ end }}"
           ],
           "properties": {
-            "always_enabled": true,
-            "template": "\u276f "
+            "always_enabled": true
           },
           "style": "plain",
+          "template": "\u276f ",
           "type": "exit"
         }
       ],
       "type": "prompt"
     }
   ],
-  "console_title": true,
-  "console_title_style": "template",
   "console_title_template": "{{if .Root}}(Admin){{end}} {{.PWD}}",
-  "version": 1
+  "version": 2
 }

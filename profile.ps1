@@ -13,8 +13,6 @@
 
 #Requires -Version 5
 
-Set-StrictMode -Version Latest
-
 Import-Module PSReadLine
 Import-Module posh-git
 Import-Module Terminal-Icons
@@ -25,7 +23,7 @@ Import-Module DevFunctions
 
 # Variables for local machine
 
-$Editor = "code.cmd"
+$Env:Editor = "code.cmd"
 $Env:CodeFolder = "$Home\Code"
 $PSFolder = $PSScriptRoot
 
@@ -35,7 +33,7 @@ $Env:POSH_GIT_ENABLED = 1
 
 # Set Prompt
 
-oh-my-posh --init --shell pwsh --config "$PSFolder\prompt-pure.omp.json" | Invoke-Expression
+oh-my-posh init pwsh --config "$PSFolder\prompt-pure.omp.json" | Invoke-Expression
 
 
 # Module Options
@@ -60,7 +58,7 @@ function Edit-Profile() {
         $PROFILE.CurrentUserAllHosts,
         $PROFILE.CurrentUserCurrentHost
     ) | Where-Object { Test-Path $_ }
-    if ($Files) { & $Editor $Files }
+    if ($Files) { & $Env:Editor $Files }
 }
 
 
