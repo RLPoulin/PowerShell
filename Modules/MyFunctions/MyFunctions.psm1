@@ -3,10 +3,10 @@
     My general-use functions.
 
 .NOTES
-    Version:        2.3
+    Version:        2.4
     Author:         Robert Poulin
     Creation Date:  2016-06-09
-    Updated:        2022-03-11
+    Updated:        2022-05-01
     License:        MIT
 
 #>

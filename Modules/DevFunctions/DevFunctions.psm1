@@ -3,10 +3,10 @@
     The functions I use for sofware development.
 
 .NOTES
-    Version:        2.4
+    Version:        2.5
     Author:         Robert Poulin
     Creation Date:  2019-12-30
-    Updated:        2022-03-11
+    Updated:        2022-05-01
     License:        MIT
 
 #>
@@ -88,8 +88,6 @@ function Receive-GitCommit {
     [Alias("pull")]
 
     Param()
-
-    # $Status = Get-GitStatus
 
     git pull --all --autostash
 }

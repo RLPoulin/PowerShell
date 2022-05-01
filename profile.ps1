@@ -3,10 +3,10 @@
     My PowerShell profile.
 
 .NOTES
-    Version:        5.0
+    Version:        5.1
     Author:         Robert Poulin
     Creation Date:  2016-06-09
-    Updated:        2021-11-11
+    Updated:        2022-05-01
     License:        MIT
 
 #>
@@ -43,23 +43,6 @@ Set-PSReadLineOption -PredictionSource History
 Set-PSReadLineOption -PredictionViewStyle ListView
 Set-PSReadlineKeyHandler -Chord 'Shift+Tab' -Function Complete
 Set-PSReadlineKeyHandler -Key Tab -Function MenuComplete
-
-
-# Functions
-
-function Edit-Profile() {
-    [CmdletBinding()]
-    [OutputType()]
-    [Alias()]
-
-    Param()
-
-    $Files = @(
-        $PROFILE.CurrentUserAllHosts,
-        $PROFILE.CurrentUserCurrentHost
-    ) | Where-Object { Test-Path $_ }
-    if ($Files) { & $Env:Editor $Files }
-}
 
 
 # Proxies

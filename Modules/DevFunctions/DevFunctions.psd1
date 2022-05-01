@@ -12,7 +12,7 @@
 RootModule = 'DevFunctions.psm1'
 
 # Version number of this module.
-ModuleVersion = '2.1'
+ModuleVersion = '2.5'
 
 # Supported PSEditions
 CompatiblePSEditions = @('Desktop', 'Core')
@@ -27,7 +27,7 @@ Author = 'Robert Poulin'
 # CompanyName = ''
 
 # Copyright statement for this module
-Copyright = '(c) 2021 Robert Poulin. Licensed under the MIT License.'
+Copyright = '(c) 2022 Robert Poulin. Licensed under the MIT License.'
 
 # Description of the functionality provided by this module
 Description = 'This module contains the functions that I use for sofware development.'

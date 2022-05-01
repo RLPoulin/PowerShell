@@ -8,3 +8,5 @@ Modules/posh-git
 Modules/PSReadLine
 Modules/PSScriptAnalyzer
 Modules/Terminal-icons
+
+prompt-pure.omp.json.bak
