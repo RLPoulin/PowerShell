@@ -3,10 +3,10 @@
     My PowerShell profile.
 
 .NOTES
-    Version:        5.1
+    Version:        5.2
     Author:         Robert Poulin
     Creation Date:  2016-06-09
-    Updated:        2022-05-01
+    Updated:        2022-05-30
     License:        MIT
 
 #>
@@ -23,7 +23,7 @@ Import-Module DevFunctions
 
 # Variables for local machine
 
-$Env:Editor = "code.cmd"
+$Env:Editor = 'code.cmd'
 $Env:CodeFolder = "$Home\Code"
 $PSFolder = $PSScriptRoot
 
@@ -40,21 +40,21 @@ oh-my-posh init pwsh --config "$PSFolder\prompt-pure.omp.json" | Invoke-Expressi
 
 Set-PSReadLineOption -EditMode Windows
 Set-PSReadLineOption -PredictionSource History
-Set-PSReadLineOption -PredictionViewStyle ListView
-Set-PSReadlineKeyHandler -Chord 'Shift+Tab' -Function Complete
-Set-PSReadlineKeyHandler -Key Tab -Function MenuComplete
+Set-PSReadLineOption -PredictionViewStyle ListView -WarningAction SilentlyContinue
+Set-PSReadLineKeyHandler -Chord 'Shift+Tab' -Function Complete
+Set-PSReadLineKeyHandler -Key Tab -Function MenuComplete
 
 
 # Proxies
 
-New-ProxyCommand Get-ChildItem "Get-HiddenChildItem" | Out-Null
+New-ProxyCommand Get-ChildItem 'Get-HiddenChildItem' | Out-Null
 $PSDefaultParameterValues["Get-HiddenChildItem`:Force"] = $True
 
-New-ProxyCommand Set-Location "Set-LocationUp" | Out-Null
-$PSDefaultParameterValues["Set-LocationUp`:Path"] = ".."
+New-ProxyCommand Set-Location 'Set-LocationUp' | Out-Null
+$PSDefaultParameterValues["Set-LocationUp`:Path"] = '..'
 Set-Alias -Name .. -Value Set-LocationUp -Option AllScope
 
-New-ProxyCommand Set-Location "Set-LocationHome" | Out-Null
+New-ProxyCommand Set-Location 'Set-LocationHome' | Out-Null
 $PSDefaultParameterValues["Set-LocationHome`:Path"] = $HOME
 Set-Alias -Name ~ -Value Set-LocationHome -Option AllScope
 
@@ -88,7 +88,7 @@ Register-ArgumentCompleter -Native -CommandName winget -ScriptBlock {
 
 Write-ColoredOutput -ForegroundColor Gray -BackgroundColor Black -KeepColors
 Write-ColoredOutput "Powershell $($PSVersionTable.PSEdition) " Yellow -NoNewline
-Write-ColoredOutput "version " White -NoNewline
+Write-ColoredOutput 'version ' White -NoNewline
 Write-ColoredOutput "$($PSVersionTable.PSVersion) " Yellow -NoNewline
 Write-ColoredOutput "on $($PSVersionTable.OS)" White
 Write-ColoredOutput "`nHi Bob!`n" Magenta

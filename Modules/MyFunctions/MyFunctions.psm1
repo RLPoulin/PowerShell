@@ -3,10 +3,10 @@
     My general-use functions.
 
 .NOTES
-    Version:        2.4
+    Version:        2.5
     Author:         Robert Poulin
     Creation Date:  2016-06-09
-    Updated:        2022-05-01
+    Updated:        2022-05-30
     License:        MIT
 
 #>
@@ -22,8 +22,8 @@ function Add-Path {
     [Alias()]
 
     Param(
-        [Parameter(Position=1, Mandatory, ValueFromPipeline)]
-        [ValidateScript({Test-Path -Path $_ -PathType Container})]
+        [Parameter(Position = 1, Mandatory, ValueFromPipeline)]
+        [ValidateScript({ Test-Path -Path $_ -PathType Container })]
         [String[]] $Path,
 
         [Parameter()]
@@ -32,8 +32,8 @@ function Add-Path {
 
     $EnvPath = Get-Path
     $Path = Resolve-Path $Path |
-        Select-Object -ExpandProperty Path |
-        ForEach-Object { $_.TrimEnd("\") }
+    Select-Object -ExpandProperty Path |
+    ForEach-Object { $_.TrimEnd('\') }
 
     if ($First) {
         $EnvPath = $Path + $EnvPath
@@ -42,7 +42,7 @@ function Add-Path {
         $EnvPath = $EnvPath + $Path
     }
 
-    $Env:PATH = [String]::Join(";", $EnvPath) + ";"
+    $Env:PATH = [String]::Join(';', $EnvPath) + ';'
 }
 
 
@@ -52,17 +52,17 @@ function Copy-File {
     [Alias()]
 
     Param(
-        [Parameter(Position=1, Mandatory, ValueFromPipeline)]
-        [ValidateScript({Test-Path -Path $_})]
+        [Parameter(Position = 1, Mandatory, ValueFromPipeline)]
+        [ValidateScript({ Test-Path -Path $_ })]
         [String] $Source,
 
-        [Parameter(Position=2, Mandatory)]
+        [Parameter(Position = 2, Mandatory)]
         [String] $Target
     )
 
     $SourceFile = [io.file]::OpenRead($Source)
     $TargetFile = [io.file]::OpenWrite($Target)
-    Write-Progress -Activity "Copying file" -status "$Source -> $Target" `
+    Write-Progress -Activity 'Copying file' -Status "$Source -> $Target" `
         -PercentComplete 0
 
     try {
@@ -73,15 +73,15 @@ function Copy-File {
             $TargetFile.Write($Buffer, 0, $Count)
             $Total += $Count
             if ($Total % 1mb -eq 0) {
-                Write-Progress -Activity "Copying file" -status "$Source -> $Target" `
-                   -PercentComplete ([Int]($Total/$SourceFile.Length * 100))
+                Write-Progress -Activity 'Copying file' -Status "$Source -> $Target" `
+                    -PercentComplete ([Int]($Total / $SourceFile.Length * 100))
             }
         } while ($Count -gt 0)
     }
     finally {
         $SourceFile.Dispose()
         $TargetFile.Dispose()
-        Write-Progress -Activity "Copying file" -Status "Ready" -Completed
+        Write-Progress -Activity 'Copying file' -Status 'Ready' -Completed
     }
 }
 
@@ -93,17 +93,17 @@ function Get-Path {
 
     Param()
 
-    [String[]] ($Env:PATH).Split(";") | Where-Object { $_.Length -gt 1 }
+    [String[]] ($Env:PATH).Split(';') | Where-Object { $_.Length -gt 1 }
 }
 
 
 function New-Directory {
-    [CmdletBinding(SupportsShouldProcess, ConfirmImpact="Low")]
+    [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'Low')]
     [OutputType()]
-    [Alias("md")]
+    [Alias('md')]
 
     Param (
-        [Parameter(Position=1, Mandatory, ValueFromPipeline)]
+        [Parameter(Position = 1, Mandatory, ValueFromPipeline)]
         [ValidateNotNullOrEmpty()]
         [ValidateScript( { !(Test-Path -Path $_) } )]
         [Object] $Path
@@ -115,17 +115,17 @@ function New-Directory {
 
 
 function New-Link {
-    [CmdletBinding(SupportsShouldProcess, ConfirmImpact="Low")]
+    [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'Low')]
     [OutputType()]
-    [Alias("ln")]
+    [Alias('ln')]
 
     Param (
-        [Parameter(Position=1, Mandatory, ValueFromPipeline)]
+        [Parameter(Position = 1, Mandatory, ValueFromPipeline)]
         [ValidateNotNullOrEmpty()]
         [ValidateScript( { !(Test-Path -Path $_) } )]
         [Object] $Path,
 
-        [Parameter(Position=2, Mandatory)]
+        [Parameter(Position = 2, Mandatory)]
         [ValidateNotNullOrEmpty()]
         [ValidateScript( { Test-Path -Path $_ } )]
         [Object] $Target
@@ -136,16 +136,16 @@ function New-Link {
 
 
 function New-ProxyCommand {
-    [CmdletBinding(SupportsShouldProcess, ConfirmImpact="None")]
+    [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'None')]
     [OutputType([System.Management.Automation.FunctionInfo])]
     [Alias()]
 
     Param(
-        [Parameter(Position=1, Mandatory, ValueFromPipeline)]
+        [Parameter(Position = 1, Mandatory, ValueFromPipeline)]
         [ValidateNotNullOrEmpty()]
         [Object] $Original,
 
-        [Parameter(Position=2, Mandatory)]
+        [Parameter(Position = 2, Mandatory)]
         [ValidateNotNullOrEmpty()]
         [String] $New
     )
@@ -158,12 +158,12 @@ function New-ProxyCommand {
 
 
 function Remove-Directory {
-    [CmdletBinding(SupportsShouldProcess, ConfirmImpact="Medium")]
+    [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'Medium')]
     [OutputType()]
-    [Alias("rd")]
+    [Alias('rd')]
 
     Param(
-        [Parameter(Position=1, Mandatory, ValueFromPipeline)]
+        [Parameter(Position = 1, Mandatory, ValueFromPipeline)]
         [ValidateScript( { Test-Path -Path $_ -PathType Container } )]
         [Object] $Path,
 
@@ -195,7 +195,7 @@ function Remove-Directory {
         Implement SupportsShouldProcess
 #>
 Function Remove-EmptyDirectory {
-    [CmdletBinding(DefaultParameterSetName = "Path", ConfirmImpact = "High")]
+    [CmdletBinding(DefaultParameterSetName = 'Path', ConfirmImpact = 'High')]
     [OutputType([System.IO.DirectoryInfo[]])]
     [Alias()]
 
@@ -203,18 +203,18 @@ Function Remove-EmptyDirectory {
         # Path to one or more locations that will have their empty subfolders removed.
         # Accepts wyldcards. Defaults to the current folder.
         [Parameter(
-            ParameterSetName = "Path", Position = 0,
+            ParameterSetName = 'Path', Position = 0,
             ValueFromPipeline, ValueFromPipelineByPropertyName
-            )]
-        [ValidateScript({Test-Path -Path $_ -PathType Container})]
-        [Alias("Name")]
+        )]
+        [ValidateScript({ Test-Path -Path $_ -PathType Container })]
+        [Alias('Name')]
         [String[]] $Path = $PWD,
 
         # Path to one or more locations that will have their empty subfolders removed.
         # Literal Paths are used exactly as typed.
-        [Parameter(ParameterSetName = "LiteralPath", ValueFromPipelineByPropertyName)]
-        [ValidateScript({Test-Path -LiteralPath $_ -PathType Container})]
-        [Alias("PSPath", "FullName")]
+        [Parameter(ParameterSetName = 'LiteralPath', ValueFromPipelineByPropertyName)]
+        [ValidateScript({ Test-Path -LiteralPath $_ -PathType Container })]
+        [Alias('PSPath', 'FullName')]
         [String[]] $LiteralPath,
 
         # Allows the removal of hidden and read-only folders.
@@ -231,16 +231,16 @@ Function Remove-EmptyDirectory {
     }
 
     Process {
-        if ($PSCmdlet.ParameterSetName -eq "Path") {
+        if ($PSCmdlet.ParameterSetName -eq 'Path') {
             $LiteralPath = Resolve-Path -Path $Path | Select-Object -ExpandProperty Path
         }
-        elseif ($PSCmdlet.ParameterSetName -eq "LiteralPath") {
+        elseif ($PSCmdlet.ParameterSetName -eq 'LiteralPath') {
             $LiteralPath = Resolve-Path -LiteralPath $LiteralPath |
             Select-Object -ExpandProperty Path
         }
 
         ForEach ($RootFolder in $LiteralPath) {
-            Write-Verbose ("Removing empty folders from: {0}" -f $RootFolder)
+            Write-Verbose ('Removing empty folders from: {0}' -f $RootFolder)
             $Count = 0
             while ($true) {
                 $SubFolders = Get-ChildItem -LiteralPath $RootFolder `
@@ -249,13 +249,13 @@ Function Remove-EmptyDirectory {
                 $Count = ($SubFolders | Measure-Object).Count
 
                 $EmptyFolders = $SubFolders |
-                    Where-Object { $_.GetFiles().Count -eq 0 -and $_.GetDirectories().Count -eq 0 }
+                Where-Object { $_.GetFiles().Count -eq 0 -and $_.GetDirectories().Count -eq 0 }
 
                 ForEach ($Folder In $EmptyFolders) {
                     Try {
                         Remove-Item -LiteralPath $Folder.FullName -Force:$Force -ErrorAction Stop
                         $Result += $Folder
-                        Write-Verbose ("Removed: {0}" -f $Folder.FullName)
+                        Write-Verbose ('Removed: {0}' -f $Folder.FullName)
                     }
                     Catch [System.IO.IOException] {
                         Write-Warning (
@@ -282,8 +282,8 @@ function Show-ColorPalette {
     Param()
 
     $Colors = @(
-        "Black", "DarkGray", "Gray", "White", "Cyan", "DarkCyan", "Blue", "DarkBlue",
-        "Green", "DarkGreen", "Yellow", "DarkYellow", "Red", "DarkRed", "Magenta", "DarkMagenta"
+        'Black', 'DarkGray', 'Gray', 'White', 'Cyan', 'DarkCyan', 'Blue', 'DarkBlue',
+        'Green', 'DarkGreen', 'Yellow', 'DarkYellow', 'Red', 'DarkRed', 'Magenta', 'DarkMagenta'
     )
     ForEach ($Color in $Colors) {
         Write-ColoredOutput "███████████████ $Color" $Color
@@ -315,7 +315,7 @@ function Start-Shutdown {
     [Alias()]
 
     Param(
-        [Parameter(Position=1, Mandatory, ValueFromPipeline)]
+        [Parameter(Position = 1, Mandatory, ValueFromPipeline)]
         [ValidateNotNullOrEmpty()]
         [String] $DateTime,
 
@@ -333,14 +333,14 @@ function Start-Shutdown {
         Write-Progress -Activity "Waiting for shutdown at: $ShutdownDateTime" `
             -SecondsRemaining ($ShutdownDelay - $i) `
             -PercentComplete (100 * $i / $ShutdownDelay) `
-            -Status "Waiting"
+            -Status 'Waiting'
         Start-Sleep -Seconds 1
     }
 
     Write-Progress -Activity "Waiting for shutdown time: $ShutdownDateTime" -Complete
 
     if ($Restart) { Restart-Computer -Force }
-    else {Stop-Computer -Force}
+    else { Stop-Computer -Force }
 
 }
 
@@ -368,9 +368,9 @@ function Test-Administrator {
         if (
             (
                 [Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()
-            ).IsInRole([Security.Principal.WindowsBuiltInRole]"Administrator")
+            ).IsInRole([Security.Principal.WindowsBuiltInRole]'Administrator')
         ) {
-            Write-Verbose "Current shell has administrator privileges."
+            Write-Verbose 'Current shell has administrator privileges.'
             $True
         }
         else {
@@ -397,57 +397,57 @@ function Test-Administrator {
         Implement SupportsShouldProcess
 #>
 function Update-TextFile {
-    [CmdletBinding(DefaultParameterSetName = "Path")]
+    [CmdletBinding(DefaultParameterSetName = 'Path')]
     [OutputType()]
     [Alias()]
 
     Param (
         # Files to replace text into. Accepts wyldcards.
         [Parameter(
-            ParameterSetName = "Path", Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName
+            ParameterSetName = 'Path', Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName
         )]
-        [ValidateScript({Test-Path -Path $_ })]
-        [Alias("Name")]
+        [ValidateScript({ Test-Path -Path $_ })]
+        [Alias('Name')]
         [String[]] $Path,
 
         # Files to replace text into. Literal Paths are used exactly as typed.
         [Parameter(
-            ParameterSetName = "LiteralPath",
+            ParameterSetName = 'LiteralPath',
             Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName
         )]
-        [ValidateScript({Test-Path -LiteralPath $_ })]
-        [Alias("PSPath", "FullName")]
+        [ValidateScript({ Test-Path -LiteralPath $_ })]
+        [Alias('PSPath', 'FullName')]
         [String[]] $LiteralPath,
 
         # Original text to be replaced. (Regex)
         [Parameter(Position = 1, Mandatory)]
-        [Alias("Old")]
+        [Alias('Old')]
         [String] $Original,
 
         # Subtitute text that replaces the original. (Regex)
         [Parameter(Position = 2, Mandatory)]
-        [Alias("New")]
+        [Alias('New')]
         [String] $Substitute
     )
 
     Process {
-        if ($PSCmdlet.ParameterSetName -eq "Path") {
+        if ($PSCmdlet.ParameterSetName -eq 'Path') {
             $LiteralPath = Resolve-Path -Path $Path | Select-Object -ExpandProperty Path
         }
-        elseif ($PSCmdlet.ParameterSetName -eq "LiteralPath") {
+        elseif ($PSCmdlet.ParameterSetName -eq 'LiteralPath') {
             $LiteralPath = Resolve-Path -LiteralPath $LiteralPath |
-                Select-Object -ExpandProperty Path
+            Select-Object -ExpandProperty Path
         }
 
         ForEach ($File in $LiteralPath) {
             $OldContent = Get-Content -LiteralPath $File -Encoding UTF8
             $NewContent = $OldContent -replace $Original, $Substitute
             if ($NewContent -eq $OldContent) {
-                Write-Verbose ("{0} unchanged." -f $File)
+                Write-Verbose ('{0} unchanged.' -f $File)
             }
             else {
-                Set-Content -LiteralPath $File -Value $NewContent -Encoding "UTF8"
-                Write-Verbose ("{0} updated." -f $File)
+                Set-Content -LiteralPath $File -Value $NewContent -Encoding 'UTF8'
+                Write-Verbose ('{0} updated.' -f $File)
             }
         }
 
@@ -470,7 +470,7 @@ function Update-TextFile {
 function Update-Software {
     [CmdletBinding()]
     [OutputType()]
-    [Alias("uds")]
+    [Alias('uds')]
 
     Param (
         # If true, will shutdown the computer after the updates.
@@ -478,7 +478,7 @@ function Update-Software {
         [Switch] $Shutdown
     )
 
-    $Color = "Cyan"
+    $Color = 'Cyan'
 
     Write-ColoredOutput "`nUpdating Winget applications...`n" $Color
     & sudo winget upgrade --all --silent
@@ -503,20 +503,20 @@ function Write-ColoredOutput {
     [Alias()]
 
     Param(
-         [Parameter(Position=1, ValueFromPipeline, ValueFromPipelinebyPropertyName)]
-         [Object] $Object = "",
+        [Parameter(Position = 1, ValueFromPipeline, ValueFromPipelinebyPropertyName)]
+        [Object] $Object = '',
 
-         [Parameter(Position=2, ValueFromPipelinebyPropertyName)]
-         [ConsoleColor] $ForegroundColor,
+        [Parameter(Position = 2, ValueFromPipelinebyPropertyName)]
+        [ConsoleColor] $ForegroundColor,
 
-         [Parameter(Position=3, ValueFromPipelinebyPropertyName)]
-         [ConsoleColor] $BackgroundColor,
+        [Parameter(Position = 3, ValueFromPipelinebyPropertyName)]
+        [ConsoleColor] $BackgroundColor,
 
-         [Parameter()]
-         [Switch] $NoNewline,
+        [Parameter()]
+        [Switch] $NoNewline,
 
-         [Parameter()]
-         [Switch] $KeepColors
+        [Parameter()]
+        [Switch] $KeepColors
     )
 
     $PreviousForegroundColor = $Host.UI.RawUI.ForegroundColor

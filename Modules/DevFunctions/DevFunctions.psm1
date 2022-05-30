@@ -16,7 +16,7 @@
 Set-StrictMode -Version Latest
 
 Import-Module posh-git -NoClobber -Cmdlet Get-GitStatus
-Import-Module MyFunctions -NoClobber -Cmdlet Write-ColoredOutput,Remove-Directory
+Import-Module MyFunctions -NoClobber -Cmdlet Write-ColoredOutput, Remove-Directory
 
 
 # functions
@@ -24,11 +24,11 @@ Import-Module MyFunctions -NoClobber -Cmdlet Write-ColoredOutput,Remove-Director
 function Enter-Project {
     [CmdletBinding()]
     [OutputType()]
-    [Alias("proj")]
+    [Alias('proj')]
 
     Param (
-        [Parameter(Position=1, ValueFromPipeline)]
-        [String] $Project = "."
+        [Parameter(Position = 1, ValueFromPipeline)]
+        [String] $Project = '.'
     )
 
     if (Test-Path $Project) {
@@ -41,7 +41,7 @@ function Enter-Project {
     Write-ColoredOutput "`n   Python Environment:`n" Magenta
     Enter-VirtualEnvironment $Project
 
-    if (Test-Path ".git") {
+    if (Test-Path '.git') {
         Write-ColoredOutput "`n   Git Status:`n" Magenta
         & git status --show-stash
     }
@@ -51,17 +51,17 @@ function Enter-Project {
 function Enter-VirtualEnvironment {
     [CmdletBinding()]
     [OutputType()]
-    [Alias("act")]
+    [Alias('act')]
 
     Param(
-        [Parameter(Position=1, ValueFromPipeline)]
+        [Parameter(Position = 1, ValueFromPipeline)]
         [String] $Environment
     )
 
-    if (Test-Path ".venv\Scripts\Activate.ps1") {
-        & ".venv\Scripts\Activate.ps1"
+    if (Test-Path '.venv\Scripts\Activate.ps1') {
+        & '.venv\Scripts\Activate.ps1'
     }
-    elseif ((Test-Path "pyproject.toml") -and "[tool.poetry]" -in (get-content "pyproject.toml")) {
+    elseif ((Test-Path 'pyproject.toml') -and '[tool.poetry]' -in (Get-Content 'pyproject.toml')) {
         . "$(poetry env info -p)\Scripts\activate.ps1"
     }
 
@@ -71,7 +71,7 @@ function Enter-VirtualEnvironment {
 function Exit-VirtualEnvironment {
     [CmdletBinding()]
     [OutputType()]
-    [Alias("deact")]
+    [Alias('deact')]
 
     Param()
 
@@ -85,7 +85,7 @@ function Exit-VirtualEnvironment {
 function Receive-GitCommit {
     [CmdletBinding()]
     [OutputType()]
-    [Alias("pull")]
+    [Alias('pull')]
 
     Param()
 
@@ -96,18 +96,18 @@ function Receive-GitCommit {
 function Send-GitCommit {
     [CmdletBinding()]
     [OutputType()]
-    [Alias("push")]
+    [Alias('push')]
 
     Param()
 
     $Status = Get-GitStatus
     if ($Status.HasWorking -or $Status.HasUntracked) {
-        Write-ColoredOutput "Please commit any changes first:" -ForegroundColor Yellow
+        Write-ColoredOutput 'Please commit any changes first:' -ForegroundColor Yellow
         Write-Output $Status.Working
         return
     }
 
-    Foreach ($Remote in (Invoke-Expression "git remote")) {
+    Foreach ($Remote in (Invoke-Expression 'git remote')) {
         Write-ColoredOutput "`nPushing to $Remote" -ForegroundColor Magenta
         & git push "$Remote" --all --force-with-lease
         & git push "$Remote" --tags
@@ -123,11 +123,11 @@ function Show-PythonSource {
     Param()
 
     $Python = (Get-Command python).Source
-    $PyPath = (Split-Path $Python -Parent).Replace($Home, "~") + "\"
+    $PyPath = (Split-Path $Python -Parent).Replace($Home, '~') + '\'
     $PyExe = Split-Path $Python -Leaf
     Write-ColoredOutput $PyPath Green -NoNewline
     Write-ColoredOutput $PyExe DarkGreen
-    & $Python "-VV"
+    & $Python '-VV'
 }
 
 
@@ -147,36 +147,41 @@ function Show-PythonSource {
 function Update-Projects {
     [CmdletBinding()]
     [OutputType()]
-    [Alias("udp")]
+    [Alias('udp')]
 
     Param (
         # Location of the root folder containing the projects. Default: $Env:CodeFolder
-        [Parameter(Position=1)]
+        [Parameter(Position = 1)]
         [String] $Path = $Env:CodeFolder
     )
 
     Begin {
-        $Color = "Cyan"
-        $ErrorColor = "Red"
+        $Color = 'Cyan'
+        $ErrorColor = 'Red'
+
         Push-Location $Path
-        $ProjectFolders = Get-ChildItem -Recurse -Depth 1 -Force -Directory ".git"
-        Remove-Directory "$(poetry config cache-dir)\artifacts" -ErrorAction SilentlyContinue
+        $ProjectFolders = Get-ChildItem -Recurse -Depth 1 -Force -Directory '.git'
     }
 
     Process {
+        $PoetryCache = "$(poetry config cache-dir)\artifacts"
+        if (Test-Path $PoetryCache) {
+            Remove-Directory $PoetryCache
+        }
+
         ForEach ($Folder in $ProjectFolders) {
             Push-Location $Folder.Parent
             Write-ColoredOutput "`nUpdating: $($Folder.Parent.Name)...`n" $Color
 
             . git fetch --all
             $Status = Get-GitStatus
-            if ($Status.HasWorking -or $Status.AheadBy -gt 0)  {
+            if ($Status.HasWorking -or $Status.AheadBy -gt 0) {
                 Write-ColoredOutput "`nRepository is in development!`n" $ErrorColor
                 Continue
             }
             Receive-GitCommit
 
-            if (Test-Path "pyproject.toml") {
+            if (Test-Path 'pyproject.toml') {
                 Write-ColoredOutput "`nUpdating python dependencies...`n" $Color
                 . poetry install
             }
