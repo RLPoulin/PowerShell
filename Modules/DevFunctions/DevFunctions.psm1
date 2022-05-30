@@ -3,10 +3,10 @@
     The functions I use for sofware development.
 
 .NOTES
-    Version:        2.5
+    Version:        2.7
     Author:         Robert Poulin
     Creation Date:  2019-12-30
-    Updated:        2022-05-01
+    Updated:        2022-05-30
     License:        MIT
 
 #>
@@ -16,7 +16,7 @@
 Set-StrictMode -Version Latest
 
 Import-Module posh-git -NoClobber -Cmdlet Get-GitStatus
-Import-Module MyFunctions -NoClobber -Cmdlet Write-ColoredOutput
+Import-Module MyFunctions -NoClobber -Cmdlet Write-ColoredOutput,Remove-Directory
 
 
 # functions
@@ -100,8 +100,6 @@ function Send-GitCommit {
 
     Param()
 
-    Get-ChildItem -Path .git -Filter FETCH*VOSTRO* -Recurse | Remove-Item
-
     $Status = Get-GitStatus
     if ($Status.HasWorking -or $Status.HasUntracked) {
         Write-ColoredOutput "Please commit any changes first:" -ForegroundColor Yellow
@@ -131,3 +129,66 @@ function Show-PythonSource {
     Write-ColoredOutput $PyExe DarkGreen
     & $Python "-VV"
 }
+
+
+<#
+.Synopsis
+    Update all projects from remote repositories.
+.DESCRIPTION
+    Will pull all remote repositories in the chosen directory and update python
+    dependencies.
+.EXAMPLE
+    Update-Projects -Path ~\MyProjects
+.INPUTS
+    None
+.OUTPUTS
+    None
+#>
+function Update-Projects {
+    [CmdletBinding()]
+    [OutputType()]
+    [Alias("udp")]
+
+    Param (
+        # Location of the root folder containing the projects. Default: $Env:CodeFolder
+        [Parameter(Position=1)]
+        [String] $Path = $Env:CodeFolder
+    )
+
+    Begin {
+        $Color = "Cyan"
+        $ErrorColor = "Red"
+        Push-Location $Path
+        $ProjectFolders = Get-ChildItem -Recurse -Depth 1 -Force -Directory ".git"
+        Remove-Directory "$(poetry config cache-dir)\artifacts" -ErrorAction SilentlyContinue
+    }
+
+    Process {
+        ForEach ($Folder in $ProjectFolders) {
+            Push-Location $Folder.Parent
+            Write-ColoredOutput "`nUpdating: $($Folder.Parent.Name)...`n" $Color
+
+            . git fetch --all
+            $Status = Get-GitStatus
+            if ($Status.HasWorking -or $Status.AheadBy -gt 0)  {
+                Write-ColoredOutput "`nRepository is in development!`n" $ErrorColor
+                Continue
+            }
+            Receive-GitCommit
+
+            if (Test-Path "pyproject.toml") {
+                Write-ColoredOutput "`nUpdating python dependencies...`n" $Color
+                . poetry install
+            }
+
+            Pop-Location
+        }
+    }
+
+    End {
+        Get-ChildItem -Recurse -Force "FETCH*-$($Env:COMPUTERNAME)*" | Remove-Item
+        Pop-Location
+    }
+}
+
+

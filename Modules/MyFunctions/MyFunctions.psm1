@@ -455,13 +455,25 @@ function Update-TextFile {
 
 }
 
-
+<#
+.Synopsis
+    Update most installed software.
+.DESCRIPTION
+    Updates all software installed with winget, scoop, and modules from NuGet.
+.EXAMPLE
+    Update-Software -Shutdown
+.INPUTS
+    None
+.OUTPUTS
+    None
+#>
 function Update-Software {
     [CmdletBinding()]
     [OutputType()]
-    [Alias("upd")]
+    [Alias("uds")]
 
     Param (
+        # If true, will shutdown the computer after the updates.
         [Parameter()]
         [Switch] $Shutdown
     )
