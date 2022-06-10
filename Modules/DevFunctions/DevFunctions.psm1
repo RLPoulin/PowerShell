@@ -38,8 +38,15 @@ function Enter-Project {
         Join-Path $Env:CodeFolder $Project | Set-Location -ErrorAction SilentlyContinue
     }
 
-    Write-ColoredOutput "`n   Python Environment:`n" Magenta
-    Enter-VirtualEnvironment $Project
+    if (Test-Path 'pyproject.toml') {
+        Write-ColoredOutput "`n   Python Environment:`n" Magenta
+        Enter-PythonEnvironment $Project
+    }
+
+    if (Test-Path 'cargo.toml') {
+        Write-ColoredOutput "`n   Rust Environment:`n" Magenta
+        Show-RustSource
+    }
 
     if (Test-Path '.git') {
         Write-ColoredOutput "`n   Git Status:`n" Magenta
@@ -48,7 +55,7 @@ function Enter-Project {
 }
 
 
-function Enter-VirtualEnvironment {
+function Enter-PythonEnvironment {
     [CmdletBinding()]
     [OutputType()]
     [Alias('act')]
@@ -61,7 +68,8 @@ function Enter-VirtualEnvironment {
     if (Test-Path '.venv\Scripts\Activate.ps1') {
         & '.venv\Scripts\Activate.ps1'
     }
-    elseif ((Test-Path 'pyproject.toml') -and '[tool.poetry]' -in (Get-Content 'pyproject.toml')) {
+    elseif ((Test-Path 'pyproject.toml') -and `
+            '[tool.poetry]' -in (Get-Content 'pyproject.toml')) {
         . "$(poetry env info -p)\Scripts\activate.ps1"
     }
 
@@ -126,8 +134,26 @@ function Show-PythonSource {
     $PyPath = (Split-Path $Python -Parent).Replace($Home, '~') + '\'
     $PyExe = Split-Path $Python -Leaf
     Write-ColoredOutput $PyPath Green -NoNewline
-    Write-ColoredOutput $PyExe DarkGreen
-    & $Python '-VV'
+    Write-ColoredOutput $PyExe DarkGreen -NoNewline
+    Write-ColoredOutput " [$(& $Python --version)]" Gray
+}
+
+
+function Show-RustSource {
+    [CmdletBinding()]
+    [OutputType()]
+    [Alias()]
+
+    Param()
+
+    $Rustc = (Get-Command rustc).Source
+    $RsPath = (Split-Path $Rustc -Parent).Replace($Home, '~') + '\'
+    $RsExe = Split-Path $Rustc -Leaf
+    Write-ColoredOutput $RsPath Green -NoNewline
+    Write-ColoredOutput $RsExe DarkGreen -NoNewline
+    Write-ColoredOutput " [$(& $Rustc --version)]" Gray
+    Write-ColoredOutput 'active toolchain: ' DarkGreen -NoNewline
+    Write-ColoredOutput "$(& rustup show active-toolchain)" Gray
 }
 
 
