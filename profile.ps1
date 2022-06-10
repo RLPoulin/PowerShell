@@ -23,7 +23,8 @@ Import-Module DevFunctions
 
 # Variables for local machine
 
-$Env:Editor = 'code.cmd'
+$Env:EDITOR = 'code.cmd'
+$Env:BROWSER = 'msedge.exe'
 $Env:CodeFolder = "$Home\Code"
 $PSFolder = $PSScriptRoot
 
@@ -33,7 +34,7 @@ $Env:POSH_GIT_ENABLED = 1
 
 # Set Prompt
 
-oh-my-posh init pwsh --config "$PSFolder\prompt-pure.omp.json" | Invoke-Expression
+oh-my-posh init pwsh --config "$PSFolder\prompt-pure.omp.yaml" | Invoke-Expression
 
 
 # Module Options
@@ -72,14 +73,22 @@ Set-Alias -Name cat -Value bat -Option AllScope
 
 # Argument Completers
 
+if (Get-Command rustup -ErrorAction SilentlyContinue) {
+    rustup completions powershell | Out-String | Invoke-Expression
+}
+
 Register-ArgumentCompleter -Native -CommandName winget -ScriptBlock {
     param($wordToComplete, $commandAst, $cursorPosition)
 
-    [Console]::InputEncoding = [Console]::OutputEncoding = $OutputEncoding = [System.Text.Utf8Encoding]::new()
+    [Console]::InputEncoding = [Console]::OutputEncoding = $OutputEncoding = `
+        [System.Text.Utf8Encoding]::new()
     $Local:word = $wordToComplete.Replace('"', '""')
     $Local:ast = $commandAst.ToString().Replace('"', '""')
-    winget complete --word="$Local:word" --commandline "$Local:ast" --position $cursorPosition | ForEach-Object {
-        [System.Management.Automation.CompletionResult]::new($_, $_, 'ParameterValue', $_)
+    winget complete --word="$Local:word" --commandline "$Local:ast" `
+        --position $cursorPosition | ForEach-Object {
+        [System.Management.Automation.CompletionResult]::new(
+            $_, $_, 'ParameterValue', $_
+        )
     }
 }
 
@@ -89,6 +98,6 @@ Register-ArgumentCompleter -Native -CommandName winget -ScriptBlock {
 Write-ColoredOutput -ForegroundColor Gray -BackgroundColor Black -KeepColors
 Write-ColoredOutput "Powershell $($PSVersionTable.PSEdition) " Yellow -NoNewline
 Write-ColoredOutput 'version ' White -NoNewline
-Write-ColoredOutput "$($PSVersionTable.PSVersion) " Yellow -NoNewline
-Write-ColoredOutput "on $($PSVersionTable.OS)" White
-Write-ColoredOutput "`nHi Bob!`n" Magenta
+Write-ColoredOutput $PSVersionTable.PSVersion Yellow -NoNewline
+Write-ColoredOutput " on $($PSVersionTable.OS)" White
+Write-ColoredOutput "`nHi $($Env:USERNAME)!`n" Magenta

@@ -1,12 +1,8 @@
 [Tt]humbs.db
 desktop.ini
 
-Modules/7Zip4Powershell
-Modules/AzureAD
-Modules/ExchangeOnlineManagement
-Modules/posh-git
-Modules/PSReadLine
-Modules/PSScriptAnalyzer
-Modules/Terminal-icons
+Modules/*
+!Modules/DevFunctions/
+!Modules/MyFunctions/
 
 prompt-pure.omp.json.bak
