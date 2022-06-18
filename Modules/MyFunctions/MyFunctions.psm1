@@ -3,10 +3,10 @@
     My general-use functions.
 
 .NOTES
-    Version:        2.5
+    Version:        2.6
     Author:         Robert Poulin
     Creation Date:  2016-06-09
-    Updated:        2022-05-30
+    Updated:        2022-06-18
     License:        MIT
 
 #>
@@ -309,38 +309,91 @@ function Show-Path {
 }
 
 
+<#
+.Synopsis
+    Shutdowns the computer after a delay.
+.DESCRIPTION
+    Will shutdown or restart the computer at the chosen time, or after a delay.
+.EXAMPLE
+    Start-Shutdown "18:30"
+.EXAMPLE
+    Start-Shutdown -DateTime "2022-06-18 18:30" -Restart
+.EXAMPLE
+    Start-Shutdown -Seconds 30
+.EXAMPLE
+    Start-Shutdown -Hours 2 -Minutes 30
+.INPUTS
+    None
+.OUTPUTS
+    System.Boolean
+#>
 function Start-Shutdown {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'DateTime')]
     [OutputType()]
     [Alias()]
 
     Param(
-        [Parameter(Position = 1, Mandatory, ValueFromPipeline)]
+        # Date and/or time, in the future at which to shutdown.
+        [Parameter(Position = 1, Mandatory, ParameterSetName = 'DateTime')]
         [ValidateNotNullOrEmpty()]
-        [String] $DateTime,
+        [DateTime] $DateTime,
 
+        # Number of seconds to wait before the shutdown.
+        [Parameter(ParameterSetName = 'Delay')]
+        [ValidateNotNullOrEmpty()]
+        [Double] $Seconds,
+
+        # Number of minutes to wait before the shutdown.
+        [Parameter(ParameterSetName = 'Delay')]
+        [ValidateNotNullOrEmpty()]
+        [Double] $Minutes,
+
+        # Number of hours to wait before the shutdown.
+        [Parameter(ParameterSetName = 'Delay')]
+        [ValidateNotNullOrEmpty()]
+        [Double] $Hours,
+
+        # If true, will restart the computer after the shutdown.
         [Parameter()]
         [Switch] $Restart
     )
 
-    $ShutdownDateTime = Get-Date -Date $DateTime
-    $CurrentDateTime = Get-Date
-    $ShutdownDelay = ($ShutdownDateTime - $CurrentDateTime).TotalSeconds
-
-    if ($ShutdownDelay -lt 0) { Throw "Invalid shutdown time: $ShutdownDateTime" }
-
-    for ( $i = 1; $i -le $ShutdownDelay; $i++ ) {
-        Write-Progress -Activity "Waiting for shutdown at: $ShutdownDateTime" `
-            -SecondsRemaining ($ShutdownDelay - $i) `
-            -PercentComplete (100 * $i / $ShutdownDelay) `
-            -Status 'Waiting'
-        Start-Sleep -Seconds 1
+    begin {
+        $CurrentDateTime = Get-Date
+        if ($PsCmdlet.ParameterSetName -eq 'DateTime') {
+            $ShutdownDelay = ($DateTime - $CurrentDateTime).TotalSeconds
+        }
+        else {
+            $ShutdownDelay = ($Hours * 60 + $Minutes) * 60 + $Seconds
+            $DateTime = $CurrentDateTime.AddSeconds($ShutdownDelay)
+            if ($ShutdownDelay -lt 0) {
+                Throw "Delay: '$Hours h $Minutes min $Seconds s'"
+            }
+        }
+        if ($ShutdownDelay -lt 0) {
+            Throw "Shutdown time '$DateTime' must be in the future."
+        }
     }
 
-    Write-Progress -Activity "Waiting for shutdown time: $ShutdownDateTime" -Complete
+    process {
+        for ( $i = 1; $i -le $ShutdownDelay; $i++ ) {
+            Write-Progress -Activity "Shutdown at: $DateTime " `
+                -SecondsRemaining ($ShutdownDelay - $i) `
+                -PercentComplete (100 * $i / $ShutdownDelay) `
+                -Status 'Waiting...'
+            Start-Sleep -Seconds 1
+        }
+        Write-Progress -Activity "Shutdown at: $DateTime " -Complete
+    }
 
-    if ($Restart) { Restart-Computer -Force }
-    else { Stop-Computer -Force }
+    end {
+        if ($Restart) {
+            # Restart-Computer -Force
+        }
+        else {
+            # Stop-Computer -Force
+        }
+    }
 
 }
 
@@ -378,6 +431,32 @@ function Test-Administrator {
             $False
         }
     }
+}
+
+
+<#
+.Synopsis
+    Test for the availability of a command.
+.DESCRIPTION
+    Returns true if the command is found by the Get-Command cmdlet.
+.EXAMPLE
+    if (Test-Command "Write-Out") { Write-Out "I work!" }
+.INPUTS
+    System.String
+.OUTPUTS
+    System.Boolean
+#>
+function Test-Command {
+    [CmdletBinding()]
+    [OutputType([Boolean])]
+    [Alias()]
+
+    Param(
+        [Parameter(Position = 1, ValueFromPipeline, Mandatory)]
+        [String] $Name
+    )
+
+    [Boolean] (Get-Command -Name $Name -ErrorAction SilentlyContinue)
 }
 
 
@@ -473,27 +552,46 @@ function Update-Software {
     [Alias('uds')]
 
     Param (
-        # If true, will shutdown the computer after the updates.
+        # If true, will shutdown the computer 1 minute after the updates.
         [Parameter()]
         [Switch] $Shutdown
     )
 
     $Color = 'Cyan'
+    $ErrorColor = 'Red'
 
     Write-ColoredOutput "`nUpdating Winget applications...`n" $Color
-    & sudo winget upgrade --all --silent
+    if (Test-Administrator) {
+        & winget install upgrade --all --silent
+    }
+    elseif (Test-Command 'sudo') {
+        & sudo winget upgrade --all --silent
+    }
+    else {
+        Write-ColoredOutput "Install 'sudo' to run winget in this console." $ErrorColor
+        Start-Process 'winget.exe' 'upgrade --all --silent' -Verb RunAs
+    }
 
-    Write-ColoredOutput "`nUpdating Scoop...`n" $Color
-    & scoop update
-    & scoop cleanup *
+    if (Test-Command 'scoop') {
+        Write-ColoredOutput "`nUpdating Scoop...`n" $Color
+        & scoop update *> $Null
+        & scoop cleanup *
 
-    Write-ColoredOutput "`nUpdating Scoop applications...`n" $Color
-    & scoop update *
+        Write-ColoredOutput "`nUpdating Scoop applications...`n" $Color
+        & scoop update *
+    }
+    else {
+        Write-ColoredOutput "Install 'scoop' to update its packages." $ErrorColor
+    }
 
-    Write-ColoredOutput "`nUpdating Powershell modules...`n"
+    Write-ColoredOutput "`nUpdating Powershell modules...`n" $Color
     Update-Module -Scope CurrentUser -AcceptLicense
 
     Write-ColoredOutput "`nDone!" $Color
+
+    if ($Shutdown) {
+        Start-Shutdown -Minutes 1
+    }
 }
 
 
