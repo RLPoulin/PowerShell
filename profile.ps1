@@ -23,13 +23,13 @@ Import-Module DevFunctions
 
 # Variables for local machine
 
-$Env:EDITOR = 'code.cmd'
-$Env:BROWSER = 'msedge.exe'
-$Env:CodeFolder = "$Home\Code"
 $PSFolder = $PSScriptRoot
+$Env:CodeFolder = "$Home\Code"
+$Env:BROWSER = 'msedge.exe'
+$Env:EDITOR = 'code.cmd'
 
-$Env:VIRTUAL_ENV_DISABLE_PROMPT = 1
 $Env:POSH_GIT_ENABLED = 1
+$Env:VIRTUAL_ENV_DISABLE_PROMPT = 1
 
 
 # Set Prompt
@@ -50,25 +50,28 @@ Set-PSReadLineKeyHandler -Key Tab -Function MenuComplete
 
 New-ProxyCommand Get-ChildItem 'Get-HiddenChildItem' | Out-Null
 $PSDefaultParameterValues["Get-HiddenChildItem`:Force"] = $True
+Set-Alias -Name la -Value Get-HiddenChildItem -Option AllScope
 
-New-ProxyCommand Set-Location 'Set-LocationUp' | Out-Null
-$PSDefaultParameterValues["Set-LocationUp`:Path"] = '..'
+New-ProxyCommand Set-Location 'Set-LocationToParent' | Out-Null
+$PSDefaultParameterValues["Set-LocationToParent`:Path"] = '..'
 Set-Alias -Name .. -Value Set-LocationUp -Option AllScope
 
-New-ProxyCommand Set-Location 'Set-LocationHome' | Out-Null
-$PSDefaultParameterValues["Set-LocationHome`:Path"] = $HOME
+New-ProxyCommand Set-Location 'Set-LocationToHome' | Out-Null
+$PSDefaultParameterValues["Set-LocationToHome`:Path"] = $HOME
 Set-Alias -Name ~ -Value Set-LocationHome -Option AllScope
 
 
 # Aliases
 
-Set-Alias -Name la -Value Get-HiddenChildItem -Option AllScope
 Set-Alias -Name ll -Value Get-ChildItem -Option AllScope
+Set-Alias -Name gh -Value Get-Help -Option AllScope
 
-Set-Alias -Name what -Value Get-Command -Option AllScope
-
-Set-Alias -Name grep -Value rg -Option AllScope
-Set-Alias -Name cat -Value bat -Option AllScope
+if (Test-Command 'rg') {
+    Set-Alias -Name grep -Value rg -Option AllScope
+}
+if (Test-Command 'bat') {
+    Set-Alias -Name cat -Value bat -Option AllScope
+}
 
 
 # Argument Completers
