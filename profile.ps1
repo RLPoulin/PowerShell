@@ -54,11 +54,11 @@ Set-Alias -Name la -Value Get-HiddenChildItem -Option AllScope
 
 New-ProxyCommand Set-Location 'Set-LocationToParent' | Out-Null
 $PSDefaultParameterValues["Set-LocationToParent`:Path"] = '..'
-Set-Alias -Name .. -Value Set-LocationUp -Option AllScope
+Set-Alias -Name .. -Value Set-LocationToParent -Option AllScope
 
 New-ProxyCommand Set-Location 'Set-LocationToHome' | Out-Null
 $PSDefaultParameterValues["Set-LocationToHome`:Path"] = $HOME
-Set-Alias -Name ~ -Value Set-LocationHome -Option AllScope
+Set-Alias -Name ~ -Value Set-LocationToHome -Option AllScope
 
 
 # Aliases
