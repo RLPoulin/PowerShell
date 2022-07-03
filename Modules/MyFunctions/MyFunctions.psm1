@@ -388,10 +388,10 @@ function Start-Shutdown {
 
     end {
         if ($Restart) {
-            # Restart-Computer -Force
+            Restart-Computer -Force
         }
         else {
-            # Stop-Computer -Force
+            Stop-Computer -Force
         }
     }
 
