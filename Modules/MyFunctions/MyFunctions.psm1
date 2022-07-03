@@ -554,7 +554,11 @@ function Update-Software {
     Param (
         # If true, will shutdown the computer 1 minute after the updates.
         [Parameter()]
-        [Switch] $Shutdown
+        [Switch] $Shutdown,
+
+        # If true, will install all updates from Windows Update and reboot.
+        [Parameter()]
+        [Switch] $WindowsUpdate
     )
 
     $Color = 'Cyan'
@@ -586,6 +590,24 @@ function Update-Software {
 
     Write-ColoredOutput "`nUpdating Powershell modules...`n" $Color
     Update-Module -Scope CurrentUser -AcceptLicense
+
+    if ($WindowsUpdate) {
+        Write-ColoredOutput "`nRunning Windows Update...`n" $Color
+        Import-Module PSWindowsUpdate
+        if (Test-Administrator) {
+            Get-WindowsUpdate -AcceptAll -Install -AutoReboot
+        }
+        elseif (Test-Command 'sudo') {
+            sudo Get-WindowsUpdate -AcceptAll -Install -AutoReboot
+        }
+        else {
+            Write-ColoredOutput "Install 'sudo' to run Windows Update in this console."`
+                $ErrorColor
+            Start-Process 'pwsh.exe' `
+                '-Command { Get-WindowsUpdate -AcceptAll -Install -AutoReboot }' `
+                -Verb RunAs
+        }
+    }
 
     Write-ColoredOutput "`nDone!" $Color
 
