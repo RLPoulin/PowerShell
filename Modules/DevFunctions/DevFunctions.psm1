@@ -1,56 +1,64 @@
 <#
-.Synopsis
+.SYNOPSIS
     The functions I use for sofware development.
 
 .NOTES
-    Version:        2.7
+    Version:        3.0.0
     Author:         Robert Poulin
     Creation Date:  2019-12-30
-    Updated:        2022-05-30
+    Updated:        2022-07-06
     License:        MIT
+
+    TODO:
+    - Use full parameter names
+    - ValueFromPipeline
+    - Input Validation
+    - Passthru/Outputs
+    - LitteralPath
+    - ShouldProcess
+    - ShouldContinue ?
+    - Write-Verbose
+    - Split into submodules ?
+    - Docstrings!
 
 #>
 
-#Requires -Version 5
-
 Set-StrictMode -Version Latest
 
-Import-Module posh-git -NoClobber -Cmdlet Get-GitStatus
-Import-Module MyFunctions -NoClobber -Cmdlet Write-ColoredOutput, Remove-Directory
-
-
-# functions
 
 function Enter-Project {
     [CmdletBinding()]
-    [OutputType()]
+    [OutputType([PSCustomObject])]
     [Alias('proj')]
-
     Param (
-        [Parameter(Position = 1, ValueFromPipeline)]
-        [String] $Project = '.'
+        [Parameter(Position = 1)]
+        [String] $Project = '.',
+
+        [Parameter()]
+        [Switch] $PassThru
     )
 
-    if (Test-Path $Project) {
-        Set-Location $Project
-    }
-    else {
-        Join-Path $Env:CodeFolder $Project | Set-Location -ErrorAction SilentlyContinue
-    }
+    process {
+        if (Test-Path $Project) {
+            Enter-Location $Project
+        }
+        else {
+            Join-Path $Env:CodeFolder $Project | Enter-Location
+        }
 
-    if (Test-Path 'pyproject.toml') {
-        Write-ColoredOutput "`n   Python Environment:`n" Magenta
-        Enter-PythonEnvironment $Project
-    }
-
-    if (Test-Path 'cargo.toml') {
-        Write-ColoredOutput "`n   Rust Environment:`n" Magenta
-        Show-RustSource
-    }
-
-    if (Test-Path '.git') {
-        Write-ColoredOutput "`n   Git Status:`n" Magenta
-        & git status --show-stash
+        if (Test-Path 'pyproject.toml') {
+            Write-Message 'Python Environment:' 'Header'
+            Enter-PythonEnvironment
+        }
+        if (Test-Path 'cargo.toml') {
+            Write-Message 'Rust Environment:' 'Header'
+            Show-RustSource
+        }
+        if (Test-Path '.git' -PathType Container) {
+            Write-Message 'Git Status:' 'Header'
+            git status --show-stash
+        }
+        if ($PassThru) { Get-GitStatus }
     }
 }
 
@@ -59,66 +67,77 @@ function Enter-PythonEnvironment {
     [CmdletBinding()]
     [OutputType()]
     [Alias('act')]
+    Param()
 
-    Param(
-        [Parameter(Position = 1, ValueFromPipeline)]
-        [String] $Environment
-    )
-
-    if (Test-Path '.venv\Scripts\Activate.ps1') {
-        & '.venv\Scripts\Activate.ps1'
+    process {
+        Exit-VirtualEnvironment
+        if (Test-Path '.venv\Scripts\Activate.ps1') {
+            . '.venv\Scripts\Activate.ps1'
+        }
+        elseif (
+            (Test-Command 'poetry') -and
+            '[tool.poetry]' -in (Get-Content 'pyproject.toml' -ErrorAction SilentlyContinue)
+        ) {
+            . "$(poetry env info -p)\Scripts\activate.ps1"
+        }
+        Show-PythonSource
     }
-    elseif ((Test-Path 'pyproject.toml') -and `
-            '[tool.poetry]' -in (Get-Content 'pyproject.toml')) {
-        . "$(poetry env info -p)\Scripts\activate.ps1"
-    }
-
-    Show-PythonSource
 }
 
 function Exit-VirtualEnvironment {
     [CmdletBinding()]
     [OutputType()]
     [Alias('deact')]
-
     Param()
 
-    if (Test-Path function:deactivate) {
-        deactivate
+    process {
+        if (Test-Path function:deactivate) {
+            deactivate
+        }
     }
 }
 
 
-
 function Receive-GitCommit {
     [CmdletBinding()]
-    [OutputType()]
+    [OutputType([PSCustomObject])]
     [Alias('pull')]
+    Param(
+        [Parameter()]
+        [Switch] $PassThru
+    )
 
-    Param()
-
-    git pull --all --autostash
+    process {
+        git pull --all --autostash
+        if ($PassThru) { Get-GitStatus }
+    }
 }
 
 
 function Send-GitCommit {
     [CmdletBinding()]
-    [OutputType()]
+    [OutputType([PSCustomObject])]
     [Alias('push')]
+    Param(
+        [Parameter()]
+        [Switch] $PassThru
+    )
 
-    Param()
+    process {
+        $status = Get-GitStatus
+        if ($status.HasWorking -or $status.HasUntracked) {
+            Write-Message 'Please commit any changes first:' 'Error'
+            Write-Output $status.Working
+            return
+        }
 
-    $Status = Get-GitStatus
-    if ($Status.HasWorking -or $Status.HasUntracked) {
-        Write-ColoredOutput 'Please commit any changes first:' -ForegroundColor Yellow
-        Write-Output $Status.Working
-        return
-    }
+        foreach ($Remote in (git remote)) {
+            Write-Message "Pushing to $Remote" 'Header'
+            git push "$Remote" --all --force-with-lease
+            git push "$Remote" --tags
+        }
 
-    Foreach ($Remote in (Invoke-Expression 'git remote')) {
-        Write-ColoredOutput "`nPushing to $Remote" -ForegroundColor Magenta
-        & git push "$Remote" --all --force-with-lease
-        & git push "$Remote" --tags
+        if ($PassThru) { Get-GitStatus }
     }
 }
 
@@ -126,100 +145,100 @@ function Send-GitCommit {
 function Show-PythonSource {
     [CmdletBinding()]
     [OutputType()]
-    [Alias()]
-
+    [Alias('shpy')]
     Param()
 
-    $Python = (Get-Command python).Source
-    $PyPath = (Split-Path $Python -Parent).Replace($Home, '~') + '\'
-    $PyExe = Split-Path $Python -Leaf
-    Write-ColoredOutput $PyPath Green -NoNewline
-    Write-ColoredOutput $PyExe DarkGreen -NoNewline
-    Write-ColoredOutput " [$(& $Python --version)]" Gray
+    process {
+        $python = (Get-Command python).Source
+        $source = @(
+            (Split-Path $python -Parent).Replace($Home, '~') + '\'
+            Split-Path $python -Leaf
+            " [$(& $python --version)]"
+        )
+        Write-Color $source -Color 'Green', 'DarkGreen', 'Gray'
+    }
 }
 
 
 function Show-RustSource {
     [CmdletBinding()]
     [OutputType()]
-    [Alias()]
-
+    [Alias('shru')]
     Param()
 
-    $Rustc = (Get-Command rustc).Source
-    $RsPath = (Split-Path $Rustc -Parent).Replace($Home, '~') + '\'
-    $RsExe = Split-Path $Rustc -Leaf
-    Write-ColoredOutput $RsPath Green -NoNewline
-    Write-ColoredOutput $RsExe DarkGreen -NoNewline
-    Write-ColoredOutput " [$(& $Rustc --version)]" Gray
-    Write-ColoredOutput 'active toolchain: ' DarkGreen -NoNewline
-    Write-ColoredOutput "$(& rustup show active-toolchain)" Gray
+    process {
+        $rustc = (Get-Command rustc).Source
+        $source = @(
+            (Split-Path $rustc -Parent).Replace($Home, '~') + '\'
+            Split-Path $rustc -Leaf
+            " [$(& $rustc --version)]"
+        )
+        $toolchain = @(
+            'active toolchain: '
+            "$(& rustup show active-toolchain)"
+        )
+        Write-Color $source -Color 'Green', 'DarkGreen', 'Gray'
+        Write-Color $toolchain -Color 'DarkYellow', 'Gray'
+    }
 }
 
 
-<#
-.Synopsis
-    Update all projects from remote repositories.
-.DESCRIPTION
-    Will pull all remote repositories in the chosen directory and update python
-    dependencies.
-.EXAMPLE
-    Update-Projects -Path ~\MyProjects
-.INPUTS
-    None
-.OUTPUTS
-    None
-#>
-function Update-Projects {
-    [CmdletBinding()]
+function Update-Project {
+    <#
+    .SYNOPSIS
+        Update all projects from remote repositories.
+    .DESCRIPTION
+        Will pull all remote repositories in the chosen directory and update python dependencies.
+    .EXAMPLE
+        Update-Projects -Path ~\MyProjects
+    .INPUTS
+        None
+    .OUTPUTS
+        None
+    #>
+
+    [CmdletBinding(ConfirmImpact = 'Low', SupportsShouldProcess)]
     [OutputType()]
     [Alias('udp')]
-
     Param (
         # Location of the root folder containing the projects. Default: $Env:CodeFolder
-        [Parameter(Position = 1)]
+        [Parameter(Position = 1, ValueFromPipeline)]
+        [ValidateNotNullOrEmpty()]
+        [ValidateScript({ Test-Path -Path $_ -PathType Container })]
         [String] $Path = $Env:CodeFolder
     )
 
-    Begin {
-        $Color = 'Cyan'
-        $ErrorColor = 'Red'
-
-        Push-Location $Path
-        $ProjectFolders = Get-ChildItem -Recurse -Depth 1 -Force -Directory '.git'
+    begin {
+        if (Test-Command 'poetry') {
+            Remove-Item "$(poetry config cache-dir)\artifacts" -Recurse -ErrorAction SilentlyContinue
+        }
     }
 
-    Process {
-        $PoetryCache = "$(poetry config cache-dir)\artifacts"
-        if (Test-Path $PoetryCache) {
-            Remove-Directory $PoetryCache
-        }
+    process {
+        Push-Location $Path -StackName 'ProjectUpdate'
+        $folders = Get-ChildItem -Filter '.git' -Directory -Recurse -Depth 1 -Force
 
-        ForEach ($Folder in $ProjectFolders) {
-            Push-Location $Folder.Parent
-            Write-ColoredOutput "`nUpdating: $($Folder.Parent.Name)...`n" $Color
+        foreach ($folder in $folders) {
+            Push-Location $folder.Parent -StackName 'ProjectUpdate'
+            Write-Message "Updating: $($folder.Parent.Name)..." 'Header'
 
-            . git fetch --all
+            git fetch --all
             $Status = Get-GitStatus
             if ($Status.HasWorking -or $Status.AheadBy -gt 0) {
-                Write-ColoredOutput "`nRepository is in development!`n" $ErrorColor
+                Write-Message 'Repository is in development!' 'Error'
+                Pop-Location
                 Continue
             }
             Receive-GitCommit
 
             if (Test-Path 'pyproject.toml') {
-                Write-ColoredOutput "`nUpdating python dependencies...`n" $Color
-                . poetry install
+                poetry install
             }
 
-            Pop-Location
+            Get-ChildItem -Recurse -Force "FETCH*-$($Env:COMPUTERNAME)*" | Remove-Item
+            Pop-Location -StackName 'ProjectUpdate'
         }
-    }
 
-    End {
-        Get-ChildItem -Recurse -Force "FETCH*-$($Env:COMPUTERNAME)*" | Remove-Item
-        Pop-Location
+        Pop-Location -StackName 'ProjectUpdate'
     }
 }
-
-

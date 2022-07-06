@@ -1,106 +1,109 @@
 <#
-.Synopsis
+.SYNOPSIS
     My PowerShell profile.
 
 .NOTES
-    Version:        5.2
+    Version:        6.0.0
     Author:         Robert Poulin
     Creation Date:  2016-06-09
-    Updated:        2022-05-30
+    Updated:        2022-07-06
     License:        MIT
+
+    TODO:
+    - Use full parameter names
+    - Standardize aliases
+    - Docstrings!
 
 #>
 
-#Requires -Version 5
+#Requires -Version 5.1
 
-Import-Module PSReadLine
-Import-Module posh-git
-Import-Module Terminal-Icons
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingInvokeExpression', '')]
+[CmdletBinding()] Param()
 
-Import-Module MyFunctions
-Import-Module DevFunctions
+Import-Module posh-git -NoClobber
+Import-Module PSReadLine -NoClobber
+Import-Module PSWriteColor -NoClobber
+Import-Module Terminal-Icons -NoClobber
+
+Import-Module MyFunctions -NoClobber -Force
+Import-Module DevFunctions -NoClobber -Force
 
 
-# Variables for local machine
+# Environment variables
 
 $PSFolder = $PSScriptRoot
 $Env:CodeFolder = "$Home\Code"
 $Env:BROWSER = 'msedge.exe'
 $Env:EDITOR = 'code.cmd'
-
 $Env:POSH_GIT_ENABLED = 1
 $Env:VIRTUAL_ENV_DISABLE_PROMPT = 1
 
 
+# Aliases
+
+Set-Alias -Name gh -Value Get-Help -Option AllScope -Scope Global
+Set-Alias -Name ll -Value Get-ChildItem -Option AllScope -Scope Global
+Set-Alias -Name profile -Value $PSCommandPath -Option AllScope -Scope Global
+Set-Alias -Name uds -Value Update-Software -Option AllScope -Scope Global
+
+Remove-Alias ls -ErrorAction SilentlyContinue
+New-SimpleFunction Get-ChildItemWide -Value { Get-ChildItem | Format-Wide -AutoSize } -Alias ls -Force
+New-SimpleFunction Set-LocationToHome -Value { Enter-Location $HOME } -Alias '~' -Force
+New-SimpleFunction Set-LocationToParent -Value { Enter-Location '..' } -Alias '..' -Force
+
+New-ProxyCommand 'Get-HelpOnline' 'Get-Help' -Default @{ 'Online' = $True } -Alias 'gho' -Force
+New-ProxyCommand 'Get-HelpFull' 'Get-Help' -Default @{ 'Full' = $True } -Alias 'ghf' -Force
+New-ProxyCommand 'Get-HiddenChildItem' 'Get-ChildItem' -Default @{ 'Force' = $True } -Alias 'la' -Force
+New-ProxyCommand 'Remove-Directory' 'Remove-Item' -Default @{ 'Recurse' = $True } -Alias 'rd' -Force
+
+
 # Set Prompt
-
-oh-my-posh init pwsh --config "$PSFolder\prompt-pure.omp.yaml" | Invoke-Expression
-
-
-# Module Options
 
 Set-PSReadLineOption -EditMode Windows
 Set-PSReadLineOption -PredictionSource History
 Set-PSReadLineOption -PredictionViewStyle ListView -WarningAction SilentlyContinue
 Set-PSReadLineKeyHandler -Chord 'Shift+Tab' -Function Complete
 Set-PSReadLineKeyHandler -Key Tab -Function MenuComplete
-
-
-# Proxies
-
-New-ProxyCommand Get-ChildItem 'Get-HiddenChildItem' | Out-Null
-$PSDefaultParameterValues["Get-HiddenChildItem`:Force"] = $True
-Set-Alias -Name la -Value Get-HiddenChildItem -Option AllScope
-
-New-ProxyCommand Set-Location 'Set-LocationToParent' | Out-Null
-$PSDefaultParameterValues["Set-LocationToParent`:Path"] = '..'
-Set-Alias -Name .. -Value Set-LocationToParent -Option AllScope
-
-New-ProxyCommand Set-Location 'Set-LocationToHome' | Out-Null
-$PSDefaultParameterValues["Set-LocationToHome`:Path"] = $HOME
-Set-Alias -Name ~ -Value Set-LocationToHome -Option AllScope
-
-
-# Aliases
-
-Set-Alias -Name ll -Value Get-ChildItem -Option AllScope
-Set-Alias -Name gh -Value Get-Help -Option AllScope
-
-if (Test-Command 'rg') {
-    Set-Alias -Name grep -Value rg -Option AllScope
-}
-if (Test-Command 'bat') {
-    Set-Alias -Name cat -Value bat -Option AllScope
-}
+oh-my-posh init pwsh --config "$PSFolder\prompt-pure.omp.yaml" | Invoke-Expression
 
 
 # Argument Completers
 
-if (Get-Command rustup -ErrorAction SilentlyContinue) {
+if (Test-Command rustup) {
+    # Argument completer for rustup
     rustup completions powershell | Out-String | Invoke-Expression
 }
 
 Register-ArgumentCompleter -Native -CommandName winget -ScriptBlock {
+    # Argument completer for winget
     param($wordToComplete, $commandAst, $cursorPosition)
 
-    [Console]::InputEncoding = [Console]::OutputEncoding = $OutputEncoding = `
-        [System.Text.Utf8Encoding]::new()
-    $Local:word = $wordToComplete.Replace('"', '""')
-    $Local:ast = $commandAst.ToString().Replace('"', '""')
-    winget complete --word="$Local:word" --commandline "$Local:ast" `
-        --position $cursorPosition | ForEach-Object {
-        [System.Management.Automation.CompletionResult]::new(
-            $_, $_, 'ParameterValue', $_
-        )
+    [Console]::InputEncoding = [Console]::OutputEncoding = $OutputEncoding = [System.Text.Utf8Encoding]::new()
+    $local:word = $wordToComplete.Replace('"', '""')
+    $local:ast = $commandAst.ToString().Replace('"', '""')
+    winget complete --word="$local:word" --commandline "$local:ast" --position $cursorPosition | ForEach-Object {
+        [System.Management.Automation.CompletionResult]::new($_, $_, 'ParameterValue', $_)
     }
 }
 
 
 # On Start
 
-Write-ColoredOutput -ForegroundColor Gray -BackgroundColor Black -KeepColors
-Write-ColoredOutput "Powershell $($PSVersionTable.PSEdition) " Yellow -NoNewline
-Write-ColoredOutput 'version ' White -NoNewline
-Write-ColoredOutput $PSVersionTable.PSVersion Yellow -NoNewline
-Write-ColoredOutput " on $($PSVersionTable.OS)" White
-Write-ColoredOutput "`nHi $($Env:USERNAME)!`n" Magenta
+function Show-Greeting {
+    $version = @(
+        "Powershell $($PSVersionTable.PSEdition) $($PSVersionTable.PSVersion)"
+        ' on '
+        $PSVersionTable.OS
+    )
+    $versionFormat = @{
+        Color = 'Yellow', 'White', 'Blue'
+        LinesBefore = 1
+        LinesAfter = 1
+    }
+    Write-Color $version @versionFormat
+    Write-Color "Hi $($Env:USERNAME)!" -Color Magenta -LinesAfter 1
+    Remove-Item function:Show-Greeting
+}
+
+Show-Greeting

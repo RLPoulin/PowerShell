@@ -12,24 +12,36 @@
     None
 
 .NOTES
-    Version:        1.1
+    Version:        1.2
     Author:         Robert Poulin
     Creation Date:  2021-08-10
-    Updated:        2021-10-04
+    Updated:        2022-07-06
     License:        MIT
 
 #>
 
-Import-Module MyFunctions
-Import-Module ExchangeOnlineManagement
+#Requires -Version 5.1
+
+[CmdletBinding()] Param()
+
+Set-StrictMode -Version Latest
+
+Import-Module PSWriteColor -NoClobber
+Import-Module ExchangeOnlineManagement -NoClobber
 
 Connect-ExchangeOnline -ShowBanner
-
 if (-not $?) {
-    Write-ColoredOutput "Connection failed!" Red
-    return
+    throw 'Connection failed!'
 }
 
-Write-ColoredOutput "Connected!" Green
-Write-Output "Use 'disconnect' to disconnect.`n"
-Set-Alias -Name "disconnect" -Value "Disconnect-ExchangeOnline" -Scope Global
+Write-Color 'Connected!' Green
+
+
+function global:disconnect {
+    Disconnect-ExchangeOnline
+    Write-Color 'Disconnected!' Yellow
+    Remove-Item funcion:disconnect
+}
+
+
+Write-Color "Type 'disconnect' to disconnect."

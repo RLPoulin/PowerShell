@@ -12,24 +12,36 @@
     None
 
 .NOTES
-    Version:        1.0
+    Version:        1.1
     Author:         Robert Poulin
     Creation Date:  2021-10-04
-    Updated:        2021-10-04
+    Updated:        2022-07-06
     License:        MIT
 
 #>
 
-Import-Module MyFunctions
-Import-Module AzureAD
+#Requires -Version 5.1
+
+[CmdletBinding()] Param()
+
+Set-StrictMode -Version Latest
+
+Import-Module PSWriteColor -NoClobber
+Import-Module AzureAD -NoClobber
 
 Connect-AzureAD
-
 if (-not $?) {
-    Write-ColoredOutput "Connection failed!" Red
-    return
+    throw 'Connection failed!'
 }
 
-Write-ColoredOutput "Connected!" Green
-Write-Output "Use 'disconnect' to disconnect.`n"
-Set-Alias -Name "disconnect" -Value "Disconnect-AzureAD" -Scope Global
+Write-Color 'Connected!' Green
+
+
+function global:disconnect {
+    Disconnect-AzureAD
+    Write-Color 'Disconnected!' Yellow
+    Remove-Item funcion:disconnect
+}
+
+
+Write-Color "Type 'disconnect' to disconnect."
