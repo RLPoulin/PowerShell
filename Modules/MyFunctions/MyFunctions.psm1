@@ -3,7 +3,7 @@
     My general-use functions.
 
 .NOTES
-    Version:        3.0.0
+    Version:        3.0.1
     Author:         Robert Poulin
     Creation Date:  2016-06-09
     Updated:        2022-07-06
@@ -81,29 +81,28 @@ function Copy-File {
     )
 
     process {
-        $Source = Resolve-Path $Source
-        $Target = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Target)
-
-        if (Test-Path -Path $Target -PathType Container) {
-            $Target = Join-Path $Target (Split-Path $Source -Leaf)
+        $sourcePath = Resolve-Path $Source
+        $targetPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Target)
+        if (Test-Path -Path $targetPath -PathType Container) {
+            $targetPath = Join-Path $targetPath (Split-Path $sourcePath -Leaf)
         }
 
-        if ((Test-Path -Path $Target) -and -not $Force) {
-            throw "Target already exists: $Target"
+        if ((Test-Path -Path $targetPath) -and -not $Force) {
+            throw "Target already exists: $targetPath"
         }
 
-        if (!($Force -or $PSCmdlet.ShouldProcess($Target))) { return }
+        if (!($PSCmdlet.ShouldProcess($targetPath))) { return }
 
-        Write-Verbose "Copying: $Source -> $Target"
+        Write-Verbose "Copying: $sourcePath -> $targetPath"
         $progressArgs = @{
             Activity = 'Copying file'
-            Status = "$Source -> $Target"
+            Status = $targetPath | Split-Path -Leaf
         }
         Write-Progress @progressArgs -PercentComplete 0
 
         try {
-            $sourceFile = [IO.File]::OpenRead($Source)
-            $targetFile = [IO.File]::OpenWrite($Target)
+            $sourceFile = [IO.File]::OpenRead($sourcePath)
+            $targetFile = [IO.File]::OpenWrite($targetPath)
 
             [Byte[]] $buffer = New-Object Byte[] 4096
             [Long] $total = [Long] $count = 0
@@ -119,7 +118,7 @@ function Copy-File {
             Write-Progress @progressArgs -Status 'Done' -Completed
         }
         catch {
-            Remove-Item $Target -ErrorAction SilentlyContinue
+            Remove-Item $targetPath -ErrorAction SilentlyContinue
             Write-Verbose 'Copy failed'
             Write-Progress @progressArgs -Status 'Failed'
             throw $_
@@ -342,13 +341,13 @@ Function Remove-EmptyDirectory {
 
     process {
         if ($PSCmdlet.ParameterSetName -eq 'Path') {
-            $LiteralPath = Resolve-Path -Path $Path | Select-Object -ExpandProperty Path
+            $targetFolder = Resolve-Path -Path $Path | Select-Object -ExpandProperty Path
         }
         elseif ($PSCmdlet.ParameterSetName -eq 'LiteralPath') {
-            $LiteralPath = Resolve-Path -LiteralPath $LiteralPath | Select-Object -ExpandProperty Path
+            $targetFolder = Resolve-Path -LiteralPath $LiteralPath | Select-Object -ExpandProperty Path
         }
 
-        foreach ($rootFolder in $LiteralPath) {
+        foreach ($rootFolder in $targetFolder) {
             Write-Verbose ('Removing empty folders from: {0}' -f $rootFolder)
             $count = 0
             while ($True) {
@@ -525,6 +524,7 @@ function Test-Administrator {
     [CmdletBinding()]
     [OutputType([Boolean])]
     Param()
+
     process {
         if (
             ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
@@ -612,13 +612,13 @@ function Update-TextFile {
 
     process {
         if ($PSCmdlet.ParameterSetName -eq 'Path') {
-            $LiteralPath = Resolve-Path -Path $Path | Select-Object -ExpandProperty Path
+            $sourcePath = Resolve-Path -Path $Path | Select-Object -ExpandProperty Path
         }
         elseif ($PSCmdlet.ParameterSetName -eq 'LiteralPath') {
-            $LiteralPath = Resolve-Path -LiteralPath $LiteralPath | Select-Object -ExpandProperty Path
+            $sourcePath = Resolve-Path -LiteralPath $LiteralPath | Select-Object -ExpandProperty Path
         }
 
-        foreach ($file in $LiteralPath) {
+        foreach ($file in $sourcePath) {
             $oldContent = Get-Content -LiteralPath $file -Encoding UTF8
             $newContent = $oldContent -replace $Original, $Substitute
             if ($newContent -eq $oldContent) {
@@ -664,31 +664,31 @@ function Write-Message {
     )
 
     begin {
-        $default = @{
+        $format = @{
             Color = $Host.UI.RawUI.ForegroundColor
             Pad = 0
             Tab = 0
         }
         switch ($Style) {
             'Header' {
-                $default.Color = 'Cyan'
-                $default.Pad = 1
-                $default.Tab = 1
+                $format.Color = 'Cyan'
+                $format.Pad = 1
+                $format.Tab = 1
             }
-            'Warning' { $default.Color = 'Yellow' }
+            'Warning' { $format.Color = 'Yellow' }
             'Error' {
-                $default.Color = 'Red'
-                $default.Pad = 1
+                $format.Color = 'Red'
+                $format.Pad = 1
             }
         }
-        if ('Pad' -notin $PSBoundParameters.Keys) { $Pad = $default.Pad }
-        if ('Tab' -notin $PSBoundParameters.Keys) { $Tab = $default.Tab }
+        if ('Pad' -in $PSBoundParameters.Keys) { $format.Pad = $Pad }
+        if ('Tab' -in $PSBoundParameters.Keys) { $format.Tab = $Tab }
 
-        $format = @{
-            Color = $default.Color
-            LinesAfter = $Pad
-            LinesBefore = $Pad
-            StartSpaces = 4 * $Tab
+        $arguments = @{
+            Color = $format.Color
+            LinesAfter = $format.Pad
+            LinesBefore = $format.Pad
+            StartSpaces = 4 * $format.Tab
             NoNewLine = $NoNewline
             ShowTime = $Time
             DateTimeFormat = 'HH:mm:ss'
@@ -696,6 +696,6 @@ function Write-Message {
     }
 
     process {
-        Write-Color -Text $Message @format
+        Write-Color -Text $Message @arguments
     }
 }
