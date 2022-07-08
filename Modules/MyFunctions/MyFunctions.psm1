@@ -3,23 +3,24 @@
     My general-use functions.
 
 .NOTES
-    Version:        3.0.1
+    Version:        3.1.0
     Author:         Robert Poulin
     Creation Date:  2016-06-09
-    Updated:        2022-07-06
+    Updated:        2022-07-08
     License:        MIT
 
     TODO:
     - Use full parameter names
     - ValueFromPipeline
+    - Replace pipeline calls to array methods .Where() .ForEach() if appropriate
     - Input Validation
-    - Passthru/Outputs
     - LitteralPath
     - ShouldProcess
     - ShouldContinue ?
     - Write-Verbose
     - Split into submodules ?
     - Docstrings!
+    - https://github.com/PowerShellOrg/Plaster
 
 #>
 
@@ -28,20 +29,21 @@ Set-StrictMode -Version Latest
 Push-Location $Null -StackName LocationStack
 
 
-function Add-Path {
+function Add-EnvPath {
     [CmdletBinding()]
-    [OutputType()]
+    [OutputType([String[]])]
     Param(
         [Parameter(Position = 1, Mandatory, ValueFromPipeline)]
         [ValidateScript({ Test-Path -Path $_ -PathType Container })]
         [String[]] $Path,
 
-        [Parameter()]
-        [Switch] $First
+        [Parameter()] [Switch] $First,
+
+        [Parameter()] [Switch] $PassThru
     )
 
     begin {
-        [String[]] $newPath = Get-Path
+        [String[]] $newPath = Get-EnvPath
     }
 
     process {
@@ -60,13 +62,14 @@ function Add-Path {
     end {
         $newPath = $newPath | Select-Object -Unique
         $Env:PATH = [String]::Join(';', $newPath) + ';'
+        if ($PassThru) { Get-EnvPath }
     }
 }
 
 
 function Copy-File {
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'Low')]
-    [OutputType()]
+    [OutputType([IO.FileInfo])]
     Param(
         [Parameter(Position = 1, Mandatory, ValueFromPipeline)]
         [Alias('Path')]
@@ -76,12 +79,13 @@ function Copy-File {
         [ValidateNotNullOrEmpty()]
         [String] $Target,
 
-        [Parameter()]
-        [Switch] $Force
+        [Parameter()] [Switch] $Force,
+
+        [Parameter()] [Switch] $PassThru
     )
 
     process {
-        $sourcePath = Resolve-Path $Source
+        $sourcePath = Get-Item -Path $Source | Select-Object -ExpandProperty FullName
         $targetPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Target)
         if (Test-Path -Path $targetPath -PathType Container) {
             $targetPath = Join-Path $targetPath (Split-Path $sourcePath -Leaf)
@@ -116,6 +120,7 @@ function Copy-File {
             } while ($count -gt 0)
             Write-Verbose 'Copy done'
             Write-Progress @progressArgs -Status 'Done' -Completed
+            if ($PassThru) { Get-Item -Path $targetPath }
         }
         catch {
             Remove-Item $targetPath -ErrorAction SilentlyContinue
@@ -151,20 +156,52 @@ function Enter-Location {
 }
 
 
-function Get-Path {
+function Get-EnvPath {
     [CmdletBinding()]
     [OutputType([String[]])]
     Param()
 
     process {
-        [String[]] ($Env:PATH).Split(';') | Where-Object { $_.Length -gt 1 }
+        [String[]] ($Env:PATH).Split(';') | Where-Object { $_.Length -gt 1 } | ForEach-Object { $_.TrimEnd('\') }
+    }
+}
+
+
+function Move-File {
+    [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'Medium')]
+    [OutputType([IO.FileInfo])]
+    Param(
+        [Parameter(Position = 1, Mandatory, ValueFromPipeline)]
+        [Alias('Path')]
+        [String] $Source,
+
+        [Parameter(Position = 2, Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [String] $Target,
+
+        [Parameter()] [Switch] $Force,
+
+        [Parameter()] [Switch] $PassThru
+    )
+
+    process {
+        $sourceFile = Get-Item -Path $Source
+        $targetFile = Copy-File -Source $sourceFile -Target $Target -Force:$Force -PassThru
+        if ((Get-FileHash $sourceFile).Hash -eq (Get-FileHash $targetFile).Hash) {
+            Write-Verbose 'Copy successful, removing source file'
+            Remove-Item $sourceFile -Force:$Force
+            if ($PassThru) { Get-Item -Path $targetFile }
+        }
+        else {
+            throw "Failed to copy '$Source' to '$Target'"
+        }
     }
 }
 
 
 function New-Directory {
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'Low')]
-    [OutputType([IO.FileInfo])]
+    [OutputType([IO.DirectoryInfo])]
     [Alias('md')]
     Param (
         [Parameter(Position = 1, Mandatory, ValueFromPipeline)]
@@ -172,11 +209,9 @@ function New-Directory {
         [ValidateScript( { !(Test-Path -Path $_) } )]
         [String] $Path,
 
-        [Parameter()]
-        [Switch] $Go,
+        [Parameter()] [Switch] $Go,
 
-        [Parameter()]
-        [Switch] $PassThru
+        [Parameter()] [Switch] $PassThru
     )
 
     process {
@@ -202,8 +237,7 @@ function New-Link {
         [ValidateScript( { Test-Path -Path $_ } )]
         [Object] $Target,
 
-        [Parameter()]
-        [Switch] $PassThru
+        [Parameter()] [Switch] $PassThru
     )
 
     process {
@@ -225,17 +259,13 @@ function New-ProxyCommand {
         [ValidateNotNullOrEmpty()]
         [Object] $Value,
 
-        [Parameter()]
-        [Hashtable] $Default = @{},
+        [Parameter()] [Hashtable] $Default = @{},
 
-        [Parameter()]
-        [String] $Alias = '',
+        [Parameter()] [String] $Alias = '',
 
-        [Parameter()]
-        [Switch] $Force,
+        [Parameter()] [Switch] $Force,
 
-        [Parameter()]
-        [Switch] $PassThru
+        [Parameter()] [Switch] $PassThru
     )
 
     process {
@@ -266,14 +296,11 @@ function New-SimpleFunction {
         [ValidateNotNullOrEmpty()]
         [Object] $Value,
 
-        [Parameter()]
-        [String] $Alias = '',
+        [Parameter()] [String] $Alias = '',
 
-        [Parameter()]
-        [Switch] $Force,
+        [Parameter()] [Switch] $Force,
 
-        [Parameter()]
-        [Switch] $PassThru
+        [Parameter()] [Switch] $PassThru
     )
 
     process {
@@ -327,12 +354,10 @@ Function Remove-EmptyDirectory {
         [String[]] $LiteralPath,
 
         # Allows the removal of hidden and read-only folders.
-        [Parameter()]
-        [Switch] $Force,
+        [Parameter()] [Switch] $Force,
 
         # Function returns an array containing the removed folders.
-        [Parameter()]
-        [Switch] $PassThru
+        [Parameter()] [Switch] $PassThru
     )
 
     begin {
@@ -393,25 +418,36 @@ function Show-ColorPalette {
         @(
             'Black', 'DarkGray', 'Gray', 'White', 'Cyan', 'DarkCyan', 'Blue', 'DarkBlue',
             'Green', 'DarkGreen', 'Yellow', 'DarkYellow', 'Red', 'DarkRed', 'Magenta', 'DarkMagenta'
-        ) | ForEach-Object { Write-Color "████ ★✓⚑♥ ████  $_" -Color $_ }
+        ).ForEach({ Write-Color "████ ★✓⚑♥ ████  $_" -Color $_ })
     }
 }
 
 
-function Show-Path {
+function Show-EnvPath {
     [CmdletBinding()]
-    [OutputType()]
-    Param()
+    [OutputType([String[]])]
+    Param(
+        [Parameter()] [Switch] $PassThru
+    )
 
     process {
-        foreach ($folder in (Get-Path)) {
+        [String[]] $folders = @()
+        foreach ($folder in (Get-EnvPath)) {
             if (Test-Path $folder) {
-                Write-Output $folder
+                $folderItem = (Get-Item $folder).FullName
+                if ($folders -contains $folderItem) {
+                    Write-Color $folderItem -Color Yellow
+                }
+                else {
+                    Write-Color $folderItem -Color Green
+                    $folders += $folderItem
+                }
             }
             else {
                 Write-Color $folder -Color Red
             }
         }
+        if ($PassThru) { $folders }
     }
 }
 
@@ -460,8 +496,7 @@ function Start-Shutdown {
         [Double] $Hours,
 
         # If true, will restart the computer after the shutdown.
-        [Parameter()]
-        [Switch] $Restart
+        [Parameter()] [Switch] $Restart
     )
 
     begin {
@@ -577,7 +612,7 @@ function Update-TextFile {
     .DESCRIPTION
         Search files for instinces and replace text in files.
     .EXAMPLE
-        Update-TextFile -Path text.txt -Original "\t" -Substitute "    "
+        Update-TextFile -Path *.txt -Original "\t" -Substitute "    "
     .INPUTS
         String[]
     .OUTPUTS
@@ -585,10 +620,10 @@ function Update-TextFile {
     #>
 
     [CmdletBinding(DefaultParameterSetName = 'Path', ConfirmImpact = 'Medium', SupportsShouldProcess)]
-    [OutputType()]
+    [OutputType([String[]])]
     Param (
         # Files to replace text into. Accepts wyldcards.
-        [Parameter(ParameterSetName = 'Path', Mandatory, ValueFromPipeline)]
+        [Parameter(ParameterSetName = 'Path', Position = 1, Mandatory, ValueFromPipeline)]
         [ValidateScript({ Test-Path -Path $_ })]
         [Alias('Name')]
         [String[]] $Path,
@@ -600,23 +635,27 @@ function Update-TextFile {
         [String[]] $LiteralPath,
 
         # Original text to be replaced. (Regex)
-        [Parameter(Position = 1, Mandatory)]
+        [Parameter(Position = 2, Mandatory)]
         [Alias('Old')]
         [String] $Original,
 
         # Subtitute text that replaces the original. (Regex)
-        [Parameter(Position = 2, Mandatory)]
+        [Parameter(Position = 3, Mandatory)]
         [Alias('New')]
-        [String] $Substitute
+        [String] $Substitute,
+
+        # If true, returns the source file path.
+        [Parameter()] [Switch] $PassThru
     )
 
     process {
         if ($PSCmdlet.ParameterSetName -eq 'Path') {
-            $sourcePath = Resolve-Path -Path $Path | Select-Object -ExpandProperty Path
+            $sourcePath = Resolve-Path -Path $Path
         }
         elseif ($PSCmdlet.ParameterSetName -eq 'LiteralPath') {
-            $sourcePath = Resolve-Path -LiteralPath $LiteralPath | Select-Object -ExpandProperty Path
+            $sourcePath = Resolve-Path -LiteralPath $LiteralPath
         }
+        [String[]] $sourcePath = $sourcePath.Path
 
         foreach ($file in $sourcePath) {
             $oldContent = Get-Content -LiteralPath $file -Encoding UTF8
@@ -629,6 +668,8 @@ function Update-TextFile {
                 Write-Verbose ('{0} updated.' -f $file)
             }
         }
+
+        if ($PassThru) { $sourcePath }
 
     }
 
@@ -656,11 +697,9 @@ function Write-Message {
         [ValidateRange(0, 10)]
         [Int] $Tab = 0,
 
-        [Parameter()]
-        [Switch] $Time,
+        [Parameter()] [Switch] $Time,
 
-        [Parameter()]
-        [Switch] $NoNewline
+        [Parameter()] [Switch] $NoNewline
     )
 
     begin {
