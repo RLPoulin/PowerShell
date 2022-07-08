@@ -12,10 +12,10 @@
     None
 
 .NOTES
-    Version:        1.2
+    Version:        1.3
     Author:         Robert Poulin
     Creation Date:  2021-08-10
-    Updated:        2022-07-06
+    Updated:        2022-07-08
     License:        MIT
 
 #>
@@ -29,8 +29,10 @@ Set-StrictMode -Version Latest
 Import-Module PSWriteColor -NoClobber
 Import-Module ExchangeOnlineManagement -NoClobber
 
-Connect-ExchangeOnline -ShowBanner
-if (-not $?) {
+try {
+    Connect-ExchangeOnline -ShowBanner
+}
+catch {
     throw 'Connection failed!'
 }
 
@@ -38,9 +40,9 @@ Write-Color 'Connected!' Green
 
 
 function global:disconnect {
-    Disconnect-ExchangeOnline
+    Disconnect-ExchangeOnline -Force
     Write-Color 'Disconnected!' Yellow
-    Remove-Item funcion:disconnect
+    Remove-Item function:disconnect
 }
 
 

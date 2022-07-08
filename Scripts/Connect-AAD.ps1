@@ -12,10 +12,10 @@
     None
 
 .NOTES
-    Version:        1.1
+    Version:        1.2
     Author:         Robert Poulin
     Creation Date:  2021-10-04
-    Updated:        2022-07-06
+    Updated:        2022-07-08
     License:        MIT
 
 #>
@@ -29,8 +29,10 @@ Set-StrictMode -Version Latest
 Import-Module PSWriteColor -NoClobber
 Import-Module AzureAD -NoClobber
 
-Connect-AzureAD
-if (-not $?) {
+try {
+    Connect-AzureAD
+}
+catch {
     throw 'Connection failed!'
 }
 
@@ -38,9 +40,9 @@ Write-Color 'Connected!' Green
 
 
 function global:disconnect {
-    Disconnect-AzureAD
+    Disconnect-AzureAD -Force
     Write-Color 'Disconnected!' Yellow
-    Remove-Item funcion:disconnect
+    Remove-Item function:disconnect
 }
 
 
