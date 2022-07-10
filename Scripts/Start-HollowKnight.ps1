@@ -12,10 +12,10 @@
     None
 
 .NOTES
-    Version:        1.1
+    Version:        1.1.1
     Author:         Robert Poulin
     Creation Date:  2021-12-31
-    Updated:        2022-07-06
+    Updated:        2022-07-10
     License:        MIT
 
 #>
@@ -26,7 +26,7 @@
 
 Set-StrictMode -Version Latest
 
-Import-Module PSWriteColor -NoClobber
+Import-Module -Name PSWriteColor -NoClobber
 
 $GameLink = "$Env:AppData\Microsoft\Windows\Start Menu\Programs\Hollow Knight.lnk"
 $SaveFolder = "$Home\AppData\LocalLow\Team Cherry\Hollow Knight"
@@ -39,10 +39,10 @@ function Rename-ItemColoredOutput {
         [Parameter(Position = 2)] [String] $NewName
     )
 
-    Rename-Item $Path $NewName
+    Rename-Item -Path $Path -NewName $NewName
     $text = 'Renamed: ', $Path, ' -> ', $NewName
     $color = 'Gray', 'Green', 'Gray', 'Green'
-    Write-Color $text $color
+    Write-Color -Text $text -Color $color
 }
 
 
@@ -55,14 +55,14 @@ function Rename-SaveFile {
 
     ForEach ($newFile in $newFiles) {
         $datFileName = $newFile.Name.Replace('.dat.new', '.dat')
-        if (Test-Path $datFileName) {
-            $writeTime = (Get-Item $datFileName).LastWriteTime.ToString()
+        if (Test-Path -Path $datFileName) {
+            $writeTime = (Get-Item -Path $datFileName).LastWriteTime.ToString()
             $writeTime = $writeTime.Replace(' ', '_').Replace(':', '.')
             $bakFileName = "$datFileName.$writeTime.bak"
-            Rename-ItemColoredOutput $datFileName $bakFileName
+            Rename-ItemColoredOutput -Path $datFileName -NewName $bakFileName
 
         }
-        Rename-ItemColoredOutput $newFile.Name $datFileName
+        Rename-ItemColoredOutput -Path $newFile.Name -NewName $datFileName
     }
 
     Pop-Location
@@ -71,8 +71,8 @@ function Rename-SaveFile {
 
 Rename-SaveFile
 
-Write-Color 'Starting Hollow Knight!' -Color Magenta -LinesBefore 1 -LinesAfter 1
-Start-Process $GameLink
+Write-Color -Text 'Starting Hollow Knight!' -Color Magenta -LinesBefore 1 -LinesAfter 1
+Start-Process -FilePath $GameLink
 Start-Sleep -Seconds 5
 (Get-Process -Name 'hollow_knight').WaitForExit()
 

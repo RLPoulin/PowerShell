@@ -10,9 +10,7 @@
     License:        MIT
 
     TODO:
-    - Use full parameter names
     - Standardize aliases
-    - Docstrings!
 
 #>
 
@@ -65,6 +63,7 @@ New-ProxyCommand -Name 'Remove-Directory' 'Remove-Item' -Default @{ 'Recurse' = 
 
 $PSReadLineOptions = @{
     BellStyle = 'Visual'
+    HistorySearchCursorMovesToEnd = $True
     PredictionSource = 'HistoryAndPlugin'
     PredictionViewStyle = 'ListView'
 }
@@ -113,7 +112,7 @@ function Show-Greeting {
     }
     Write-Color -Text $version @versionFormat
     Write-Color -Text "Hi $($Env:USERNAME)!" -Color Magenta -LinesAfter 1
-    Remove-Item -Path function:Show-Greeting
+    Remove-Item -Path Function:Show-Greeting
 }
 
 Show-Greeting

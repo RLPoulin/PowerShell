@@ -3,24 +3,20 @@
     The functions I use for sofware development.
 
 .NOTES
-    Version:        3.0.0
+    Version:        3.0.1
     Author:         Robert Poulin
     Creation Date:  2019-12-30
-    Updated:        2022-07-06
+    Updated:        2022-07-10
     License:        MIT
 
     TODO:
-    - Use full parameter names
     - ValueFromPipeline
     - Input Validation
-    - Passthru/Outputs
     - LitteralPath
     - ShouldProcess
     - ShouldContinue ?
     - Write-Verbose
-    - Split into submodules ?
     - Docstrings!
-
 #>
 
 Set-StrictMode -Version Latest
@@ -34,28 +30,27 @@ function Enter-Project {
         [Parameter(Position = 1)]
         [String] $Project = '.',
 
-        [Parameter()]
-        [Switch] $PassThru
+        [Parameter()] [Switch] $PassThru
     )
 
     process {
-        if (Test-Path $Project) {
-            Enter-Location $Project
+        if (Test-Path -Path $Project) {
+            Enter-Location -Path $Project
         }
         else {
-            Join-Path $Env:CodeFolder $Project | Enter-Location
+            Enter-Location (Join-Path -Path $Env:CodeFolder -ChildPath $Project)
         }
 
-        if (Test-Path 'pyproject.toml') {
-            Write-Message 'Python Environment:' 'Header'
+        if (Test-Path -Path 'pyproject.toml') {
+            Write-Message -Message 'Python Environment:' -Style 'Header'
             Enter-PythonEnvironment
         }
-        if (Test-Path 'cargo.toml') {
-            Write-Message 'Rust Environment:' 'Header'
+        if (Test-Path -Path 'cargo.toml') {
+            Write-Message -Message 'Rust Environment:' -Style 'Header'
             Show-RustSource
         }
-        if (Test-Path '.git' -PathType Container) {
-            Write-Message 'Git Status:' 'Header'
+        if (Test-Path -Path '.git' -PathType Container) {
+            Write-Message -Message 'Git Status:' -Style 'Header'
             git status --show-stash
         }
         if ($PassThru) { Get-GitStatus }
@@ -71,12 +66,12 @@ function Enter-PythonEnvironment {
 
     process {
         Exit-VirtualEnvironment
-        if (Test-Path '.venv\Scripts\Activate.ps1') {
+        if (Test-Path -Path '.venv\Scripts\Activate.ps1') {
             . '.venv\Scripts\Activate.ps1'
         }
         elseif (
-            (Test-Command 'poetry') -and
-            '[tool.poetry]' -in (Get-Content 'pyproject.toml' -ErrorAction SilentlyContinue)
+            (Test-Command -Name 'poetry') -and
+            '[tool.poetry]' -in (Get-Content -Path 'pyproject.toml' -ErrorAction SilentlyContinue)
         ) {
             . "$(poetry env info -p)\Scripts\activate.ps1"
         }
@@ -91,7 +86,7 @@ function Exit-VirtualEnvironment {
     Param()
 
     process {
-        if (Test-Path function:deactivate) {
+        if (Test-Path -Path Function:deactivate) {
             deactivate
         }
     }
@@ -103,8 +98,7 @@ function Receive-GitCommit {
     [OutputType([PSCustomObject])]
     [Alias('pull')]
     Param(
-        [Parameter()]
-        [Switch] $PassThru
+        [Parameter()] [Switch] $PassThru
     )
 
     process {
@@ -119,22 +113,37 @@ function Send-GitCommit {
     [OutputType([PSCustomObject])]
     [Alias('push')]
     Param(
-        [Parameter()]
-        [Switch] $PassThru
+        [Parameter()] [Switch] $All,
+
+        [Parameter()] [Switch] $Force,
+
+        [Parameter()] [Switch] $PassThru
     )
 
     process {
         $status = Get-GitStatus
         if ($status.HasWorking -or $status.HasUntracked) {
-            Write-Message 'Please commit any changes first:' 'Error'
-            Write-Output $status.Working
-            return
+            if ($Force) {
+                Write-Message -Message 'Repository has uncommited files.' -Style 'Warning'
+            }
+            else {
+                Write-Message -Message 'Please commit any changes first:' -Style 'Error' -Pad 0
+                Write-Output -InputObject $status.Working
+                return
+            }
         }
 
-        foreach ($Remote in (git remote)) {
-            Write-Message "Pushing to $Remote" 'Header'
-            git push "$Remote" --all --force-with-lease
-            git push "$Remote" --tags
+        if ($All) {
+            foreach ($remote in (git remote)) {
+                Write-Message -Message "Pushing to $remote" -Style 'Header'
+                git push "$remote" --all --force-with-lease
+                git push "$remote" --tags
+            }
+        }
+        else {
+            Write-Message -Message "Pushing to $($status.Upstream)" -Style 'Header'
+            git push --force-with-lease
+            git push --tags
         }
 
         if ($PassThru) { Get-GitStatus }
@@ -149,13 +158,13 @@ function Show-PythonSource {
     Param()
 
     process {
-        $python = (Get-Command python).Source
+        $python = (Get-Command -Name python).Source
         $source = @(
-            (Split-Path $python -Parent).Replace($Home, '~') + '\'
-            Split-Path $python -Leaf
+            (Split-Path -Path $python -Parent).Replace($Home, '~') + '\'
+            Split-Path -Path $python -Leaf
             " [$(& $python --version)]"
         )
-        Write-Color $source -Color 'Green', 'DarkGreen', 'Gray'
+        Write-Color -Text $source -Color 'Green', 'DarkGreen', 'Gray'
     }
 }
 
@@ -167,18 +176,18 @@ function Show-RustSource {
     Param()
 
     process {
-        $rustc = (Get-Command rustc).Source
+        $rustc = (Get-Command -Name rustc).Source
         $source = @(
-            (Split-Path $rustc -Parent).Replace($Home, '~') + '\'
-            Split-Path $rustc -Leaf
+            (Split-Path -Path $rustc -Parent).Replace($Home, '~') + '\'
+            Split-Path -Path $rustc -Leaf
             " [$(& $rustc --version)]"
         )
         $toolchain = @(
             'active toolchain: '
             "$(& rustup show active-toolchain)"
         )
-        Write-Color $source -Color 'Green', 'DarkGreen', 'Gray'
-        Write-Color $toolchain -Color 'DarkYellow', 'Gray'
+        Write-Color -Text $source -Color 'Green', 'DarkGreen', 'Gray'
+        Write-Color -Text $toolchain -Color 'DarkYellow', 'Gray'
     }
 }
 
@@ -209,36 +218,36 @@ function Update-Project {
     )
 
     begin {
-        if (Test-Command 'poetry') {
-            Remove-Item "$(poetry config cache-dir)\artifacts" -Recurse -ErrorAction SilentlyContinue
+        if (Test-Command -Name 'poetry') {
+            Remove-Item -Path "$(poetry config cache-dir)\artifacts" -Recurse -ErrorAction SilentlyContinue
         }
     }
 
     process {
-        Push-Location $Path -StackName 'ProjectUpdate'
+        Push-Location -Path $Path -StackName ProjectUpdate
         $folders = Get-ChildItem -Filter '.git' -Directory -Recurse -Depth 1 -Force
 
         foreach ($folder in $folders) {
-            Push-Location $folder.Parent -StackName 'ProjectUpdate'
-            Write-Message "Updating: $($folder.Parent.Name)..." 'Header'
+            Push-Location -Path $folder.Parent -StackName ProjectUpdate
+            Write-Message -Message "Updating: $($folder.Parent.Name)..." -Style 'Header'
 
             git fetch --all
             $Status = Get-GitStatus
             if ($Status.HasWorking -or $Status.AheadBy -gt 0) {
-                Write-Message 'Repository is in development!' 'Error'
-                Pop-Location
+                Write-Message -Message 'Repository is in development!' -Style 'Error'
+                Pop-Location -StackName ProjectUpdate
                 Continue
             }
             Receive-GitCommit
 
-            if (Test-Path 'pyproject.toml') {
+            if (Test-Path -Path 'pyproject.toml') {
                 poetry install
             }
 
-            Get-ChildItem -Recurse -Force "FETCH*-$($Env:COMPUTERNAME)*" | Remove-Item
-            Pop-Location -StackName 'ProjectUpdate'
+            Get-ChildItem -Filter "FETCH*-$($Env:COMPUTERNAME)*" -Recurse -Force | Remove-Item
+            Pop-Location -StackName ProjectUpdate
         }
 
-        Pop-Location -StackName 'ProjectUpdate'
+        Pop-Location -StackName ProjectUpdate
     }
 }
