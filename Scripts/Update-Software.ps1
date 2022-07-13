@@ -15,11 +15,16 @@
     None
 
 .NOTES
-    Version:        1.0.2
+    Version:        1.0.3
     Author:         Robert Poulin
     Creation Date:  2022-07-06
     Updated:        2022-07-13
     License:        MIT
+
+    TODO:
+        - Add PSScheduledJob\Get-ScheduledJob for shutdown after reboot ?
+          https://docs.microsoft.com/en-us/powershell/module/psscheduledjob/
+        - Check https://github.com/Romanitho/Winget-AutoUpdate
 #>
 
 #Requires -Version 5.1
@@ -71,8 +76,16 @@ if ($PSCmdlet.ShouldProcess('Powershell modules')) {
 }
 
 if ($PSCmdlet.ShouldProcess('Windows Update')) {
+    $updateArgs = @{
+        Install = $True
+        AcceptAll = $True
+        RecurseCycle = 2
+        AutoReboot = $Shutdown
+        IgnoreReboot = !($Shutdown)
+        Verbose = $True
+    }
     Write-Message -Message 'Running Windows Update...' -Style 'Header' -Time
-    Get-WindowsUpdate -AcceptAll -Install -AutoReboot:$Shutdown
+    Get-WindowsUpdate @updateArgs
 }
 
 Write-Message -Message "`nDone!" -Style 'Header'
