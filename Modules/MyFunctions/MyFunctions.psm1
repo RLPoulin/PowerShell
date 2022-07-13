@@ -132,27 +132,6 @@ function Copy-File {
     }
 }
 
-
-function Enter-Location {
-    [CmdletBinding()]
-    [OutputType()]
-    [Alias('c')]
-    Param(
-        [Parameter(Position = 1, ValueFromPipeline)]
-        [Object] $Path
-    )
-
-    process {
-        if ($Null -eq $Path) {
-            Pop-Location -StackName LocationStack
-        }
-        else {
-            Push-Location -Path $Path -StackName LocationStack
-        }
-    }
-}
-
-
 function Get-EnvPath {
     [CmdletBinding()]
     [OutputType([String[]])]
@@ -213,7 +192,7 @@ function New-Directory {
 
     process {
         $directory = New-Item -Path $Path -ItemType Directory
-        if ($Go) { Enter-Location -Path $directory }
+        if ($Go) { Update-Location -Path $directory }
         if ($PassThru) { $directory }
     }
 }
@@ -599,6 +578,29 @@ function Test-Command {
         [Boolean] (Get-Command -Name $Name -ErrorAction SilentlyContinue)
     }
 
+}
+
+
+function Update-Location {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute(
+        'PSUseShouldProcessForStateChangingFunctions', '', Justification = 'No system state change.'
+    )]
+    [CmdletBinding()]
+    [OutputType()]
+    [Alias('cd')]
+    Param(
+        [Parameter(Position = 1, ValueFromPipeline)]
+        [Object] $Path
+    )
+
+    process {
+        if ($Null -eq $Path) {
+            Pop-Location -StackName LocationStack
+        }
+        else {
+            Push-Location -Path $Path -StackName LocationStack
+        }
+    }
 }
 
 

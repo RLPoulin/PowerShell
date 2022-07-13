@@ -3,7 +3,7 @@
     The functions I use for sofware development.
 
 .NOTES
-    Version:        3.0.2
+    Version:        3.0.3
     Author:         Robert Poulin
     Creation Date:  2019-12-30
     Updated:        2022-07-13
@@ -35,10 +35,10 @@ function Enter-Project {
 
     process {
         if (Test-Path -Path $Project) {
-            Enter-Location -Path $Project
+            Update-Location -Path $Project
         }
         else {
-            Enter-Location (Join-Path -Path $Env:CodeFolder -ChildPath $Project)
+            Update-Location (Join-Path -Path $Env:CodeFolder -ChildPath $Project)
         }
 
         if (Test-Path -Path 'pyproject.toml') {
