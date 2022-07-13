@@ -3,20 +3,19 @@
     My PowerShell profile.
 
 .NOTES
-    Version:        6.1.0
+    Version:        6.2.0
     Author:         Robert Poulin
     Creation Date:  2016-06-09
-    Updated:        2022-07-10
+    Updated:        2022-07-13
     License:        MIT
-
-    TODO:
-    - Standardize aliases
 
 #>
 
 #Requires -Version 5.1
 
-[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingInvokeExpression', '')]
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute(
+    'PSAvoidUsingInvokeExpression', '', Justification = 'Used for init of oh-my-posh and rustup.'
+)]
 [CmdletBinding()] Param()
 
 Import-Module -Name posh-git -Global -NoClobber
@@ -43,20 +42,19 @@ $Env:VIRTUAL_ENV_DISABLE_PROMPT = 1
 
 # Aliases
 
-Set-Alias -Name gh -Value Get-Help -Option AllScope -Scope Global
-Set-Alias -Name ll -Value Get-ChildItem -Option AllScope -Scope Global
-Set-Alias -Name profile -Value $PSCommandPath -Option AllScope -Scope Global
-Set-Alias -Name uds -Value Update-Software -Option AllScope -Scope Global
+Set-Alias -Name 'profile' -Value $PSCommandPath -Option AllScope -Scope Global
 
-Remove-Alias -Name ls -ErrorAction SilentlyContinue
-New-SimpleFunction -Name Get-ChildItemWide -Value { Get-ChildItem | Format-Wide -AutoSize } -Alias ls -Force
-New-SimpleFunction -Name Set-LocationToHome -Value { Enter-Location $HOME } -Alias '~' -Force
-New-SimpleFunction -Name Set-LocationToParent -Value { Enter-Location '..' } -Alias '..' -Force
+New-SimpleFunction -Alias 'ls' -Name Get-ChildItemWide -Value { Get-ChildItem | Format-Wide -AutoSize }
+Set-Alias -Name 'll' -Value Get-ChildItem -Option AllScope -Scope Global
+New-ProxyCommand -Alias 'la' -Name Get-HiddenChildItem -Value Get-ChildItem -Default @{ 'Force' = $True }
 
-New-ProxyCommand -Name 'Get-HelpOnline' 'Get-Help' -Default @{ 'Online' = $True } -Alias 'gho' -Force
-New-ProxyCommand -Name 'Get-HelpFull' 'Get-Help' -Default @{ 'Full' = $True } -Alias 'ghf' -Force
-New-ProxyCommand -Name 'Get-HiddenChildItem' 'Get-ChildItem' -Default @{ 'Force' = $True } -Alias 'la' -Force
-New-ProxyCommand -Name 'Remove-Directory' 'Remove-Item' -Default @{ 'Recurse' = $True } -Alias 'rd' -Force
+New-SimpleFunction -Alias '~' -Name Set-LocationToHome -Value { Update-Location $HOME }
+New-SimpleFunction -Alias '..' -Name Set-LocationToParent -Value { Update-Location '..' }
+New-ProxyCommand -Alias 'rd' -Name Remove-Directory -Value Remove-Item -Default @{ 'Recurse' = $True }
+
+Set-Alias -Name 'gh' -Value Get-Help -Option AllScope -Scope Global
+New-ProxyCommand -Alias 'gho' -Name Get-HelpOnline -Value Get-Help -Default @{ 'Online' = $True }
+New-ProxyCommand -Alias 'ghf' -Name Get-HelpFull -Value Get-Help -Default @{ 'Full' = $True }
 
 
 # Set Prompt
@@ -67,7 +65,7 @@ $PSReadLineOptions = @{
     PredictionSource = 'HistoryAndPlugin'
     PredictionViewStyle = 'ListView'
 }
-Set-PSReadLineOption @PSReadLineOptions
+Set-PSReadLineOption @PSReadLineOptions -WarningAction SilentlyContinue
 Set-PSReadLineKeyHandler -Chord UpArrow -Function HistorySearchBackward
 Set-PSReadLineKeyHandler -Chord DownArrow -Function HistorySearchForward
 Set-PSReadLineKeyHandler -Chord 'Alt+UpArrow' -Function YankLastArg

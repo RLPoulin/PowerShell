@@ -15,10 +15,10 @@
     None
 
 .NOTES
-    Version:        1.0.1
+    Version:        1.0.2
     Author:         Robert Poulin
     Creation Date:  2022-07-06
-    Updated:        2022-07-10
+    Updated:        2022-07-13
     License:        MIT
 #>
 
@@ -26,6 +26,7 @@
 
 
 [CmdletBinding(ConfirmImpact = 'Medium', SupportsShouldProcess)]
+[Alias('uds')]
 Param (
     # If true, will shutdown the computer 1 minute after the updates.
     [Parameter()] [Switch] $Shutdown

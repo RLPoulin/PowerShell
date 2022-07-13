@@ -3,10 +3,10 @@
     My general-use functions.
 
 .NOTES
-    Version:        3.1.1
+    Version:        3.3.0
     Author:         Robert Poulin
     Creation Date:  2016-06-09
-    Updated:        2022-07-10
+    Updated:        2022-07-13
     License:        MIT
 
     TODO:
@@ -252,9 +252,11 @@ function New-ProxyCommand {
         $proxyCommand = [Management.Automation.ProxyCommand]::Create($metadata)
         $newCommand = New-SimpleFunction -Name $Name -Value $proxyCommand -Force:$Force -Alias:$Alias -PassThru
 
-        foreach ($key in $Default.Keys) {
-            $Local:ErrorActionPreference = 'SilentlyContinue'
-            $Global:PSDefaultParameterValues.Add("$Name`:$key", $Default[$key])
+        if ($Null -ne $newCommand) {
+            foreach ($key in $Default.Keys) {
+                $Local:ErrorActionPreference = 'SilentlyContinue'
+                $Global:PSDefaultParameterValues.Add("$Name`:$key", $Default[$key])
+            }
         }
 
         if ($PassThru) { $newCommand }
@@ -282,16 +284,21 @@ function New-SimpleFunction {
     )
 
     process {
-        $arguments = @{
-            Path = 'Function:'
-            Name = "Global:$Name"
-            Value = $Value
-            Force = $Force
+        $newFunction = Get-Item -Path Function:$Name -ErrorAction SilentlyContinue
+        if ($Null -eq $newFunction -or $Force) {
+            $newItemArgs = @{
+                Path = 'Function:'
+                Name = "Global:$Name"
+                Value = $Value
+                Force = $Force
+            }
+            $newFunction = New-Item @newItemArgs -Value $Value -Force:$Force
         }
-        $newFunction = New-Item @arguments
-        if ($Alias) {
+
+        if ($Alias -and $Null -ne $NewFunction) {
             Set-Alias -Name $Alias -Value $newFunction -Force:$Force -Option AllScope -Scope Global
         }
+
         if ($PassThru) { $newFunction }
     }
 }
@@ -339,7 +346,7 @@ Function Remove-EmptyDirectory {
     )
 
     begin {
-        $getArguments = @{
+        $getFoldersArgs = @{
             Directory = $True
             Recurse = $True
             Force = $Force
@@ -359,7 +366,7 @@ Function Remove-EmptyDirectory {
             Write-Verbose -Message "Removing empty folders from: $targetFolder"
             $count = 0
             while ($True) {
-                [IO.DirectoryInfo[]] $subFolders = Get-ChildItem -LiteralPath $targetFolder @getArguments
+                [IO.DirectoryInfo[]] $subFolders = Get-ChildItem -LiteralPath $targetFolder @getFoldersArgs
                 $newCount = $subFolders.Length
                 if ($newCount -eq $count) { Break }
                 $count = $newCount
@@ -721,7 +728,7 @@ function Write-Message {
         if ('Pad' -in $PSBoundParameters.Keys) { $format.Pad = $Pad }
         if ('Tab' -in $PSBoundParameters.Keys) { $format.Tab = $Tab }
 
-        $arguments = @{
+        $writeArgs = @{
             Color = $format.Color
             LinesAfter = $format.Pad
             LinesBefore = $format.Pad
@@ -733,6 +740,6 @@ function Write-Message {
     }
 
     process {
-        Write-Color -Text $Message @arguments
+        Write-Color -Text $Message @writeArgs
     }
 }
