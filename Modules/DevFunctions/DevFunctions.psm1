@@ -3,7 +3,7 @@
     The functions I use for sofware development.
 
 .NOTES
-    Version:        3.0.4
+    Version:        3.0.5
     Author:         Robert Poulin
     Creation Date:  2019-12-30
     Updated:        2022-07-15
@@ -73,7 +73,7 @@ function Enter-PythonEnvironment {
         }
         elseif (
             (Test-Command -Name 'poetry') -and
-            '[tool.poetry]' -in (Get-Content -Path 'pyproject.toml' -ErrorAction SilentlyContinue)
+            '[tool.poetry]' -in (Get-Content -Path 'pyproject.toml' -ErrorAction Ignore)
         ) {
             . "$(poetry env info -p)\Scripts\activate.ps1"
         }

@@ -3,10 +3,10 @@
     My PowerShell profile.
 
 .NOTES
-    Version:        6.3.0
+    Version:        6.3.1
     Author:         Robert Poulin
     Creation Date:  2016-06-09
-    Updated:        2022-07-13
+    Updated:        2022-07-15
     License:        MIT
 
 #>
@@ -30,15 +30,13 @@ Import-Module -Name DevFunctions -Global -NoClobber -Force
 # Environment variables
 
 $PSFolder = $PSScriptRoot
-$Env:CodeFolder = (Resolve-Path "$HOME\Code" -ErrorAction SilentlyContinue).Path
+$Env:CodeFolder = (Resolve-Path "$HOME\Code" -ErrorAction Ignore).Path
 
 $Env:BAT_THEME = 'Visual Studio Dark+'
 $Env:BROWSER = 'msedge'
 $Env:EDITOR = 'code'
 $Env:POSH_GIT_ENABLED = 1
-$Env:POSH_THEMES_PATH = (
-    Resolve-Path "$($Env:LOCALAPPDATA)\Programs\oh-my-posh\themes" -ErrorAction SilentlyContinue
-).Path
+$Env:POSH_THEMES_PATH = (Resolve-Path "$($Env:LOCALAPPDATA)\Programs\oh-my-posh\themes" -ErrorAction Ignore).Path
 $Env:VIRTUAL_ENV_DISABLE_PROMPT = 1
 
 

@@ -3,7 +3,7 @@
     My general-use functions.
 
 .NOTES
-    Version:        3.3.2
+    Version:        3.3.3
     Author:         Robert Poulin
     Creation Date:  2016-06-09
     Updated:        2022-07-15
@@ -123,7 +123,7 @@ function Copy-File {
             if ($PassThru) { Get-Item -Path $targetPath }
         }
         catch {
-            Remove-Item -Path $targetPath -ErrorAction SilentlyContinue
+            Remove-Item -Path $targetPath -ErrorAction Ignore
             Write-Verbose -Message 'Copy failed'
             Write-Progress @progressArgs -Status 'Failed'
             throw $_
@@ -259,7 +259,7 @@ function New-ProxyCommand {
 
         if ($Null -ne $newCommand) {
             foreach ($key in $Default.Keys) {
-                $Local:ErrorActionPreference = 'SilentlyContinue'
+                $Local:ErrorActionPreference = 'Ignore'
                 $Global:PSDefaultParameterValues.Add("$Name`:$key", $Default[$key])
             }
         }
@@ -587,7 +587,7 @@ function Test-Command {
     )
 
     process {
-        [Boolean] (Get-Command -Name $Name -ErrorAction SilentlyContinue)
+        [Boolean] (Get-Command -Name $Name -ErrorAction Ignore)
     }
 
 }
