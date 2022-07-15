@@ -3,10 +3,10 @@
     The functions I use for sofware development.
 
 .NOTES
-    Version:        3.0.3
+    Version:        3.0.4
     Author:         Robert Poulin
     Creation Date:  2019-12-30
-    Updated:        2022-07-13
+    Updated:        2022-07-15
     License:        MIT
 
     TODO:
@@ -20,6 +20,8 @@
 #>
 
 Set-StrictMode -Version Latest
+
+$DirSep = [IO.Path]::DirectorySeparatorChar
 
 
 function Enter-Project {
@@ -160,7 +162,7 @@ function Show-PythonSource {
     process {
         $python = (Get-Command -Name python).Source
         $source = @(
-            (Split-Path -Path $python -Parent).Replace($Home, '~') + '\'
+            (Split-Path -Path $python -Parent).Replace($Home, '~') + $DirSep
             Split-Path -Path $python -Leaf
             " [$(& $python --version)]"
         )
@@ -178,7 +180,7 @@ function Show-RustSource {
     process {
         $rustc = (Get-Command -Name rustc).Source
         $source = @(
-            (Split-Path -Path $rustc -Parent).Replace($Home, '~') + '\'
+            (Split-Path -Path $rustc -Parent).Replace($Home, '~') + $DirSep
             Split-Path -Path $rustc -Leaf
             " [$(& $rustc --version)]"
         )

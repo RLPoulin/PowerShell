@@ -3,7 +3,7 @@
     My PowerShell profile.
 
 .NOTES
-    Version:        6.2.0
+    Version:        6.3.0
     Author:         Robert Poulin
     Creation Date:  2016-06-09
     Updated:        2022-07-13
@@ -30,13 +30,15 @@ Import-Module -Name DevFunctions -Global -NoClobber -Force
 # Environment variables
 
 $PSFolder = $PSScriptRoot
-$Env:CodeFolder = "$Home\Code"
+$Env:CodeFolder = (Resolve-Path "$HOME\Code" -ErrorAction SilentlyContinue).Path
 
 $Env:BAT_THEME = 'Visual Studio Dark+'
 $Env:BROWSER = 'msedge'
 $Env:EDITOR = 'code'
 $Env:POSH_GIT_ENABLED = 1
-$Env:POSH_THEMES_PATH = "$($Env:LOCALAPPDATA)\Programs\oh-my-posh\themes"
+$Env:POSH_THEMES_PATH = (
+    Resolve-Path "$($Env:LOCALAPPDATA)\Programs\oh-my-posh\themes" -ErrorAction SilentlyContinue
+).Path
 $Env:VIRTUAL_ENV_DISABLE_PROMPT = 1
 
 
@@ -44,7 +46,7 @@ $Env:VIRTUAL_ENV_DISABLE_PROMPT = 1
 
 Set-Alias -Name 'profile' -Value $PSCommandPath -Option AllScope -Scope Global
 
-New-SimpleFunction -Alias 'ls' -Name Get-ChildItemWide -Value { Get-ChildItem | Format-Wide -AutoSize }
+New-SimpleFunction -Alias 'ls' -Name Get-ChildItemWide -Value { Get-ChildItem @args | Format-Wide -AutoSize }
 Set-Alias -Name 'll' -Value Get-ChildItem -Option AllScope -Scope Global
 New-ProxyCommand -Alias 'la' -Name Get-HiddenChildItem -Value Get-ChildItem -Default @{ 'Force' = $True }
 
@@ -72,7 +74,7 @@ Set-PSReadLineKeyHandler -Chord 'Alt+UpArrow' -Function YankLastArg
 Set-PSReadLineKeyHandler -Chord 'Alt+RightArrow' -Function ForwardWord
 Set-PSReadLineKeyHandler -Chord Tab -Function MenuComplete
 Set-PSReadLineKeyHandler -Chord 'Shift+Tab' -Function Complete
-oh-my-posh init pwsh --config "$PSFolder\prompt-pure.omp.yaml" | Invoke-Expression
+oh-my-posh init pwsh --config (Join-Path -Path $PSFolder -ChildPath prompt-pure.omp.yaml) | Invoke-Expression
 
 
 # Argument Completers
@@ -101,7 +103,7 @@ function Show-Greeting {
     $version = @(
         "Powershell $($PSVersionTable.PSEdition) $($PSVersionTable.PSVersion)"
         ' on '
-        $PSVersionTable.OS
+        [Environment]::OSVersion.VersionString
     )
     $versionFormat = @{
         Color = 'Yellow', 'White', 'Blue'
@@ -109,7 +111,7 @@ function Show-Greeting {
         LinesAfter = 1
     }
     Write-Color -Text $version @versionFormat
-    Write-Color -Text "Hi $($Env:USERNAME)!" -Color Magenta -LinesAfter 1
+    Write-Color -Text "Hi $([Environment]::UserName)!" -Color Magenta -LinesAfter 1
     Remove-Item -Path Function:Show-Greeting
 }
 

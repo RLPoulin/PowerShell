@@ -3,10 +3,10 @@
     My general-use functions.
 
 .NOTES
-    Version:        3.3.0
+    Version:        3.3.1
     Author:         Robert Poulin
     Creation Date:  2016-06-09
-    Updated:        2022-07-13
+    Updated:        2022-07-15
     License:        MIT
 
     TODO:
@@ -22,6 +22,9 @@
 #>
 
 Set-StrictMode -Version Latest
+
+$DirSep = [IO.Path]::DirectorySeparatorChar
+$PathSep = [IO.Path]::PathSeparator
 
 Push-Location -Path $Null -StackName LocationStack
 
@@ -44,7 +47,7 @@ function Add-EnvPath {
     }
 
     process {
-        [String[]] $newItem = (Resolve-Path -Path $Path).Path.ForEach({ $_.TrimEnd('\') })
+        [String[]] $newItem = (Resolve-Path -Path $Path).Path.TrimEnd($DirSep)
 
         if ($First) {
             $newPath = $newItem + $newPath
@@ -57,7 +60,8 @@ function Add-EnvPath {
     end {
         $newPath = Select-Object -InputObject $newPath -Unique
         if ($PSCmdlet.ShouldProcess('Env:PATH')) {
-            $Env:PATH = [String]::Join(';', $newPath) + ';'
+            $Env:PATH = [String]::Join($PathSep, $newPath) + $PathSep
+
         }
         if ($PassThru) { Get-EnvPath }
     }
@@ -138,7 +142,7 @@ function Get-EnvPath {
     Param()
 
     process {
-        ($Env:PATH).Split(';').Where({ $_.Length -gt 1 }).ForEach({ $_.TrimEnd('\') })
+        ($Env:PATH).Split($PathSep).Where({ $_.Length -gt 1 }).Trim().TrimEnd($DirSep)
     }
 }
 
@@ -219,7 +223,9 @@ function New-Link {
     )
 
     process {
-        $link = New-Item -Path $Path -ItemType SymbolicLink -Value $Target
+        $linkPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Path)
+        $targetPath = Resolve-Path $Target
+        $link = New-Item -Path $linkPath -ItemType SymbolicLink -Value $targetPath
         if ($PassThru) { $link }
     }
 }
@@ -709,7 +715,7 @@ function Write-Message {
 
     begin {
         $format = @{
-            Color = $Host.UI.RawUI.ForegroundColor
+            Color = 'Gray'
             Pad = 0
             Tab = 0
         }

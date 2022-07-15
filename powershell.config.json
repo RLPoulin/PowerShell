@@ -1,1 +1,8 @@
-{"Microsoft.PowerShell:ExecutionPolicy":"Unrestricted"}
+{
+  "Microsoft.PowerShell:ExecutionPolicy": "Unrestricted",
+  "ExperimentalFeatures": [
+    "PSCommandNotFoundSuggestion",
+    "PSExec",
+    "PSNativePSPathResolution"
+  ]
+}
