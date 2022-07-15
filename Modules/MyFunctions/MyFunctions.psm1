@@ -3,7 +3,7 @@
     My general-use functions.
 
 .NOTES
-    Version:        3.3.1
+    Version:        3.3.2
     Author:         Robert Poulin
     Creation Date:  2016-06-09
     Updated:        2022-07-15
@@ -60,10 +60,9 @@ function Add-EnvPath {
     end {
         $newPath = Select-Object -InputObject $newPath -Unique
         if ($PSCmdlet.ShouldProcess('Env:PATH')) {
-            $Env:PATH = [String]::Join($PathSep, $newPath) + $PathSep
-
+            $Env:PATH = Join-String -InputObject $newPath -Separator $PathSep
+            if ($PassThru) { Get-EnvPath }
         }
-        if ($PassThru) { Get-EnvPath }
     }
 }
 
