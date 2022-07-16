@@ -3,7 +3,7 @@
     My general-use functions.
 
 .NOTES
-    Version:        3.3.5
+    Version:        3.3.6
     Author:         Robert Poulin
     Creation Date:  2016-06-09
     Updated:        2022-07-16
@@ -549,11 +549,14 @@ function Test-Administrator {
     Param()
 
     process {
-        if (
-            ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
-                [Security.Principal.WindowsBuiltInRole] 'Administrator'
-            )
-        ) {
+        if ($IsWindows) {
+            $user = [Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()
+            $isAdmin = $user.IsInRole([Security.Principal.WindowsBuiltInRole] 'Administrator')
+        }
+        else {
+            $isAdmin = (whoami) -eq 'root'
+        }
+        if ($isAdmin) {
             Write-Verbose -Message 'Current process has administrator privileges.'
             $True
         }
