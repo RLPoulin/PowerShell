@@ -12,7 +12,7 @@
     RootModule = 'MyFunctions.psm1'
 
     # Version number of this module.
-    ModuleVersion = '3.3.4'
+    ModuleVersion = '3.3.5'
 
     # Supported PSEditions
     CompatiblePSEditions = @('Desktop', 'Core')
@@ -33,7 +33,7 @@
     Description = 'My general-use functions.'
 
     # Minimum version of the PowerShell engine required by this module
-    PowerShellVersion = '5.1.0'
+    PowerShellVersion = '7.2.0'
 
     # Name of the PowerShell host required by this module
     # PowerShellHostName = ''

@@ -3,7 +3,7 @@
     My general-use functions.
 
 .NOTES
-    Version:        3.3.4
+    Version:        3.3.5
     Author:         Robert Poulin
     Creation Date:  2016-06-09
     Updated:        2022-07-16
@@ -602,12 +602,18 @@ function Update-Location {
     [Alias('cd')]
     Param(
         [Parameter(Position = 1, ValueFromPipeline)]
-        [Object] $Path
+        [Object] $Path,
+
+        [Parameter()] [Switch] $Follow
     )
 
     process {
         if ($Null -eq $Path) {
             Pop-Location -StackName LocationStack
+        }
+        elseif ($Follow) {
+            $linkTarget = (Get-Item -Path $Path).LinkTarget ?? $Path
+            Push-Location -Path $linkTarget -StackName LocationStack
         }
         else {
             Push-Location -Path $Path -StackName LocationStack
