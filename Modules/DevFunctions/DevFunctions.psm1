@@ -3,10 +3,10 @@
     The functions I use for sofware development.
 
 .NOTES
-    Version:        3.0.5
+    Version:        3.0.6
     Author:         Robert Poulin
     Creation Date:  2019-12-30
-    Updated:        2022-07-15
+    Updated:        2022-07-16
     License:        MIT
 
     TODO:
@@ -227,7 +227,7 @@ function Update-Project {
 
     process {
         Push-Location -Path $Path -StackName ProjectUpdate
-        $folders = Get-ChildItem -Path '*\.git' -Directory -Recurse -Depth 1 -Force
+        $folders = Get-ChildItem -Path '*\.git' -Directory -Force
 
         foreach ($folder in $folders) {
             Push-Location -Path $folder.Parent -StackName ProjectUpdate
