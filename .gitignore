@@ -1,3 +1,5 @@
+Help/
+
 Modules/*
 !Modules/DevFunctions/
 !Modules/MyFunctions/

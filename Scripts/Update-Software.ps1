@@ -15,10 +15,10 @@
     None
 
 .NOTES
-    Version:        1.0.3
+    Version:        1.1.0
     Author:         Robert Poulin
     Creation Date:  2022-07-06
-    Updated:        2022-07-13
+    Updated:        2022-07-16
     License:        MIT
 
     TODO:
@@ -27,11 +27,10 @@
         - Check https://github.com/Romanitho/Winget-AutoUpdate
 #>
 
-#Requires -Version 5.1
+#Requires -Version 7.2
 
 
 [CmdletBinding(ConfirmImpact = 'Medium', SupportsShouldProcess)]
-[Alias('uds')]
 Param (
     # If true, will shutdown the computer 1 minute after the updates.
     [Parameter()] [Switch] $Shutdown
@@ -45,15 +44,22 @@ Import-Module -Name PSWindowsUpdate -NoClobber -Verbose:$False
 
 
 if (!(Test-Administrator)) {
-    $arguments = '-File', $MyInvocation.MyCommand.Path
-    $arguments += Select-Object -InputObject ($MyInvocation.Line.Split()) -Skip 1
-    Start-Process -FilePath pwsh.exe -ArgumentList $arguments -Verb RunAs
-    exit $?
+    if (Test-Command gsudo) {
+        Write-Message -Message 'This script requires local admin privileges. Elevating...' -Style 'Warning'
+        gsudo "$($MyInvocation.MyCommand.Source)" $args
+        if ($LastExitCode -eq 999 ) {
+            throw 'Failed to elevate.'
+        }
+        exit $LastExitCode
+    }
+    else {
+        throw 'This script requires local admin privileges.'
+    }
 }
 
 if ($PSCmdlet.ShouldProcess('Winget')) {
     Write-Message -Message 'Updating Winget applications...' -Style 'Header' -Time
-    winget upgrade --all --silent
+    winget upgrade --all --source Winget --silent
 }
 
 if (Test-Command 'scoop') {
@@ -73,6 +79,7 @@ if ($PSCmdlet.ShouldProcess('Powershell modules')) {
     Write-Message -Message 'Updating Powershell modules...' -Style 'Header' -Time
     Update-Module -Scope AllUsers -AcceptLicense
     Update-Module -Scope CurrentUser -AcceptLicense
+    Update-Help -UICulture en-US -ErrorAction SilentlyContinue
 }
 
 if ($PSCmdlet.ShouldProcess('Windows Update')) {
