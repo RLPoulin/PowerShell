@@ -3,10 +3,10 @@
     My general-use functions.
 
 .NOTES
-    Version:        3.3.3
+    Version:        3.3.4
     Author:         Robert Poulin
     Creation Date:  2016-06-09
-    Updated:        2022-07-15
+    Updated:        2022-07-16
     License:        MIT
 
     TODO:
@@ -301,7 +301,7 @@ function New-SimpleFunction {
         }
 
         if ($Alias -and $Null -ne $NewFunction) {
-            Set-Alias -Name $Alias -Value $newFunction -Force:$Force -Option AllScope -Scope Global
+            Set-Alias -Name $Alias -Value $newFunction -Force:$Force -Scope Global
         }
 
         if ($PassThru) { $newFunction }

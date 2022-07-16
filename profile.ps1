@@ -3,7 +3,7 @@
     My PowerShell profile.
 
 .NOTES
-    Version:        6.3.1
+    Version:        6.3.2
     Author:         Robert Poulin
     Creation Date:  2016-06-09
     Updated:        2022-07-15
@@ -42,17 +42,17 @@ $Env:VIRTUAL_ENV_DISABLE_PROMPT = 1
 
 # Aliases
 
-Set-Alias -Name 'profile' -Value $PSCommandPath -Option AllScope -Scope Global
+Set-Alias -Name 'profile' -Value $PSCommandPath
 
 New-SimpleFunction -Alias 'ls' -Name Get-ChildItemWide -Value { Get-ChildItem @args | Format-Wide -AutoSize }
-Set-Alias -Name 'll' -Value Get-ChildItem -Option AllScope -Scope Global
+Set-Alias -Name 'll' -Value Get-ChildItem
 New-ProxyCommand -Alias 'la' -Name Get-HiddenChildItem -Value Get-ChildItem -Default @{ 'Force' = $True }
 
 New-SimpleFunction -Alias '~' -Name Set-LocationToHome -Value { Update-Location $HOME }
 New-SimpleFunction -Alias '..' -Name Set-LocationToParent -Value { Update-Location '..' }
 New-ProxyCommand -Alias 'rd' -Name Remove-Directory -Value Remove-Item -Default @{ 'Recurse' = $True }
 
-Set-Alias -Name 'gh' -Value Get-Help -Option AllScope -Scope Global
+Set-Alias -Name 'gh' -Value Get-Help
 New-ProxyCommand -Alias 'gho' -Name Get-HelpOnline -Value Get-Help -Default @{ 'Online' = $True }
 New-ProxyCommand -Alias 'ghf' -Name Get-HelpFull -Value Get-Help -Default @{ 'Full' = $True }
 
