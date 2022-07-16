@@ -1,10 +1,5 @@
-[Tt]humbs.db
-desktop.ini
-
 Modules/*
 !Modules/DevFunctions/
 !Modules/MyFunctions/
-
-!Scripts/
 
 prompt-pure.omp.json.bak
