@@ -95,7 +95,7 @@ if ($PSCmdlet.ShouldProcess('Windows Update')) {
     Get-WindowsUpdate @updateArgs
 }
 
-Write-Message -Message "`nDone!" -Style 'Header'
+Write-Message -Message 'Done!' -Style 'Header'
 
 if ($Shutdown) {
     Start-Shutdown -Minutes 1

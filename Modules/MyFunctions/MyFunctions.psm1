@@ -289,7 +289,7 @@ function New-SimpleFunction {
     )
 
     process {
-        $newFunction = Get-Item -Path Function:$Name -ErrorAction SilentlyContinue
+        $newFunction = Get-Item -Path Function:$Name -ErrorAction Ignore
         if ($Null -eq $newFunction -or $Force) {
             $newItemArgs = @{
                 Path = 'Function:'
@@ -297,7 +297,7 @@ function New-SimpleFunction {
                 Value = $Value
                 Force = $Force
             }
-            $newFunction = New-Item @newItemArgs -Value $Value -Force:$Force
+            $newFunction = New-Item @newItemArgs
         }
 
         if ($Alias -and $Null -ne $NewFunction) {
