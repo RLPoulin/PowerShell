@@ -37,7 +37,7 @@ function Enter-Project {
 
     process {
         if (Test-Path -Path $Project) {
-            Update-Location -Path $Project
+            Update-Location -Path $Project -Follow
         }
         else {
             Update-Location (Join-Path -Path $Env:CodeFolder -ChildPath $Project)
@@ -104,6 +104,7 @@ function Receive-GitCommit {
     )
 
     process {
+        git fetch --all --prune
         git pull --all --autostash
         if ($PassThru) { Get-GitStatus }
     }
@@ -233,7 +234,8 @@ function Update-Project {
             Push-Location -Path $folder.Parent -StackName ProjectUpdate
             Write-Message -Message "Updating: $($folder.Parent.Name)..." -Style 'Header'
 
-            git fetch --all
+            git checkout main
+            git fetch --all --prune
             $Status = Get-GitStatus
             if ($Status.HasWorking -or $Status.AheadBy -gt 0) {
                 Write-Message -Message 'Repository is in development!' -Style 'Error'
