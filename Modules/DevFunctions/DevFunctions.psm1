@@ -36,12 +36,10 @@ function Enter-Project {
     )
 
     process {
-        if (Test-Path -Path $Project) {
-            Update-Location -Path $Project -Follow
+        if (!(Test-Path -Path $Project)) {
+            $Project = Join-Path -Path $Env:CodeFolder -ChildPath $Project
         }
-        else {
-            Update-Location (Join-Path -Path $Env:CodeFolder -ChildPath $Project)
-        }
+        Update-Location -Path $Project -Follow
 
         if (Test-Path -Path 'pyproject.toml') {
             Write-Message -Message 'Python Environment:' -Style 'Header'
@@ -53,6 +51,7 @@ function Enter-Project {
         }
         if (Test-Path -Path '.git' -PathType Container) {
             Write-Message -Message 'Git Status:' -Style 'Header'
+            git fetch --all --tags --prune --prune-tags
             git status --show-stash
         }
         if ($PassThru) { Get-GitStatus }
@@ -104,7 +103,7 @@ function Receive-GitCommit {
     )
 
     process {
-        git fetch --all --prune
+        git fetch --all --tags --prune --prune-tags
         git pull --all --autostash
         if ($PassThru) { Get-GitStatus }
     }
@@ -124,6 +123,7 @@ function Send-GitCommit {
     )
 
     process {
+        git fetch --all --tags
         $status = Get-GitStatus
         if ($status.HasWorking -or $status.HasUntracked) {
             if ($Force) {
