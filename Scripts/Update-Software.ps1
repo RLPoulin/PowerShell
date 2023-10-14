@@ -15,22 +15,19 @@
     None
 
 .NOTES
-    Version:        1.1.0
+    Version:        1.2.0
     Author:         Robert Poulin
     Creation Date:  2022-07-06
-    Updated:        2022-07-16
+    Updated:        2023-10-14
     License:        MIT
 
     TODO:
-        - Add PSScheduledJob\Get-ScheduledJob for shutdown after reboot ?
-          https://docs.microsoft.com/en-us/powershell/module/psscheduledjob/
         - Check https://github.com/Romanitho/Winget-AutoUpdate
 #>
 
 #Requires -Version 7.2
 
-
-[CmdletBinding(ConfirmImpact = 'Medium', SupportsShouldProcess)]
+[CmdletBinding(ConfirmImpact = 'High', SupportsShouldProcess)]
 Param (
     # If true, will shutdown the computer 1 minute after the updates.
     [Parameter()] [Switch] $Shutdown
@@ -39,8 +36,8 @@ Param (
 
 Set-StrictMode -Version Latest
 
-Import-Module -Name MyFunctions -NoClobber -Verbose:$False
-Import-Module -Name PSWindowsUpdate -NoClobber -Verbose:$False
+Import-Module -Name MyFunctions -NoClobber -ErrorAction Stop -Verbose:$False
+Import-Module -Name PSWindowsUpdate -NoClobber -ErrorAction Stop -Verbose:$False
 
 
 if (!(Test-Administrator)) {
@@ -57,32 +54,31 @@ if (!(Test-Administrator)) {
     }
 }
 
-if ($PSCmdlet.ShouldProcess('Winget')) {
+if ($PSCmdlet.ShouldProcess('Winget', 'upgrade --all')) {
     Write-Message -Message 'Updating Winget applications...' -Style 'Header' -Time
-    winget upgrade --all --source Winget --silent
+    winget upgrade --all --source Winget --silent --accept-package-agreements
 }
 
-if (Test-Command 'scoop') {
-    if ($PSCmdlet.ShouldProcess('Scoop')) {
-        Write-Message -Message 'Updating Scoop...' -Style 'Header' -Time
-        scoop update *> $Null
-        scoop cleanup * *> $Null
-        Write-Message -Message 'Updating Scoop applications...' -Style 'Header' -Time
-        scoop update *
-    }
-}
-else {
-    Write-Message -Message "Install 'scoop' to update its packages." -Style 'Warning'
+if ((Test-Command 'scoop') -and $PSCmdlet.ShouldProcess('Scoop', 'update *')) {
+    Write-Message -Message 'Updating Scoop...' -Style 'Header' -Time
+    scoop update *> $Null
+    scoop cleanup * *> $Null
+    Write-Message -Message 'Updating Scoop applications...' -Style 'Header' -Time
+    scoop update *
 }
 
-if ($PSCmdlet.ShouldProcess('Powershell modules')) {
+if ((Test-Command 'pipx') -and $PSCmdlet.ShouldProcess('Pipx', 'upgrade-all')) {
+    Write-Message -Message 'Updating Pipx packages...' -Style 'Header' -Time
+    pipx upgrade-all
+}
+
+if ($PSCmdlet.ShouldProcess('PowerShell modules', 'update')) {
     Write-Message -Message 'Updating Powershell modules...' -Style 'Header' -Time
-    Update-Module -Scope AllUsers -AcceptLicense
-    Update-Module -Scope CurrentUser -AcceptLicense
-    Update-Help -UICulture en-US -ErrorAction SilentlyContinue
+    Update-Module -Scope AllUsers -AcceptLicense -Confirm:$False
+    Update-Module -Scope CurrentUser -AcceptLicense -Confirm:$False
 }
 
-if ($PSCmdlet.ShouldProcess('Windows Update')) {
+if ($PSCmdlet.ShouldProcess('Windows Update', 'update')) {
     $updateArgs = @{
         Install = $True
         AcceptAll = $True
@@ -90,6 +86,7 @@ if ($PSCmdlet.ShouldProcess('Windows Update')) {
         AutoReboot = $Shutdown
         IgnoreReboot = !($Shutdown)
         Verbose = $True
+        Confirm = $False
     }
     Write-Message -Message 'Running Windows Update...' -Style 'Header' -Time
     Get-WindowsUpdate @updateArgs
@@ -98,5 +95,5 @@ if ($PSCmdlet.ShouldProcess('Windows Update')) {
 Write-Message -Message 'Done!' -Style 'Header'
 
 if ($Shutdown) {
-    Start-Shutdown -Minutes 1
+    Start-Shutdown -Minutes 10
 }
