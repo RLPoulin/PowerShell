@@ -12,7 +12,7 @@
     RootModule = 'MyFunctions.psm1'
 
     # Version number of this module.
-    ModuleVersion = '3.3.6'
+    ModuleVersion = '3.4.0'
 
     # Supported PSEditions
     CompatiblePSEditions = @('Desktop', 'Core')
@@ -27,7 +27,7 @@
     # CompanyName = ''
 
     # Copyright statement for this module
-    Copyright = '(c) 2022 Robert Poulin. All rights reserved.'
+    Copyright = '(c) 2023 Robert Poulin. All rights reserved.'
 
     # Description of the functionality provided by this module
     Description = 'My general-use functions.'
