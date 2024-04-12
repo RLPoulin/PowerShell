@@ -12,10 +12,10 @@
     RootModule = 'MyFunctions.psm1'
 
     # Version number of this module.
-    ModuleVersion = '3.4.0'
+    ModuleVersion = '3.5.0'
 
     # Supported PSEditions
-    CompatiblePSEditions = @('Desktop', 'Core')
+    CompatiblePSEditions = @('Core')
 
     # ID used to uniquely identify this module
     GUID = '0e7e19df-1dd3-4fa6-8d7e-41a53a358c19'
@@ -27,13 +27,13 @@
     # CompanyName = ''
 
     # Copyright statement for this module
-    Copyright = '(c) 2023 Robert Poulin. All rights reserved.'
+    # Copyright = ''
 
     # Description of the functionality provided by this module
     Description = 'My general-use functions.'
 
     # Minimum version of the PowerShell engine required by this module
-    PowerShellVersion = '7.2.0'
+    PowerShellVersion = '7.4'
 
     # Name of the PowerShell host required by this module
     # PowerShellHostName = ''
@@ -98,10 +98,10 @@
             # Tags = @()
 
             # A URL to the license for this module.
-            # LicenseUri = ''
+            LicenseUri = 'https://mit-license.org/'
 
             # A URL to the main website for this project.
-            # ProjectUri = ''
+            ProjectUri = 'https://github.com/RLPoulin/PowerShell'
 
             # A URL to an icon representing this module.
             # IconUri = ''
@@ -116,7 +116,7 @@
             # RequireLicenseAcceptance = $false
 
             # External dependent modules of this module
-            # ExternalModuleDependencies = @()
+            ExternalModuleDependencies = @('PSWriteColor')
 
         } # End of PSData hashtable
 

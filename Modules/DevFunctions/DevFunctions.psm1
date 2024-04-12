@@ -3,20 +3,11 @@
     The functions I use for sofware development.
 
 .NOTES
-    Version:        3.0.6
+    Version:        4.0.0
     Author:         Robert Poulin
     Creation Date:  2019-12-30
-    Updated:        2022-07-16
+    Updated:        2024-04-12
     License:        MIT
-
-    TODO:
-    - ValueFromPipeline
-    - Input Validation
-    - LitteralPath
-    - ShouldProcess
-    - ShouldContinue ?
-    - Write-Verbose
-    - Docstrings!
 #>
 
 Set-StrictMode -Version Latest

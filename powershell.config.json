@@ -1,7 +1,6 @@
 {
   "Microsoft.PowerShell:ExecutionPolicy": "RemoteSigned",
   "ExperimentalFeatures": [
-    "PSCommandNotFoundSuggestion",
-    "PSNativeCommandErrorActionPreference"
+    "PSCommandNotFoundSuggestion"
   ]
 }

@@ -3,23 +3,23 @@
     My PowerShell profile.
 
 .NOTES
-    Version:        6.3.2
+    Version:        7.0.0
     Author:         Robert Poulin
     Creation Date:  2016-06-09
-    Updated:        2022-07-15
+    Updated:        2024-04-12
     License:        MIT
 
 #>
 
-#Requires -Version 5.1
+#Requires -Version 7.4
 
 [Diagnostics.CodeAnalysis.SuppressMessageAttribute(
     'PSAvoidUsingInvokeExpression', '', Justification = 'Used for init of oh-my-posh and rustup.'
 )]
 [CmdletBinding()] Param()
 
-Import-Module -Name posh-git -Global -NoClobber
-Import-Module -Name PSReadLine -Global -NoClobber
+if (!([Environment]::UserInteractive) -or ($Host.Name -eq 'ConsoleHost' -and $Host.Version -lt '7.4')) { exit }
+
 Import-Module -Name PSWriteColor -Global -NoClobber
 Import-Module -Name Terminal-Icons -Global -NoClobber
 
@@ -30,13 +30,14 @@ Import-Module -Name DevFunctions -Global -NoClobber -Force
 # Environment variables
 
 $PSFolder = $PSScriptRoot
-$Env:CodeFolder = (Resolve-Path "$HOME\Code" -ErrorAction Ignore).Path
+$PSProfile = $PSCommandPath
+$Env:CodeFolder = (Resolve-Path "$HOME\Code" -ErrorAction Ignore)?.Path
 
 $Env:BAT_THEME = 'Visual Studio Dark+'
 $Env:BROWSER = 'msedge'
 $Env:EDITOR = 'code'
 $Env:POSH_GIT_ENABLED = 1
-$Env:POSH_THEMES_PATH = (Resolve-Path "$($Env:LOCALAPPDATA)\Programs\oh-my-posh\themes" -ErrorAction Ignore).Path
+$Env:POSH_THEMES_PATH = (Resolve-Path "$($Env:LOCALAPPDATA)\Programs\oh-my-posh\themes" -ErrorAction Ignore)?.Path
 $Env:VIRTUAL_ENV_DISABLE_PROMPT = 1
 
 

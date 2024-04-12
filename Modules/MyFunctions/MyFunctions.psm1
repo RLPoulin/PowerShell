@@ -3,18 +3,20 @@
     My general-use functions.
 
 .NOTES
-    Version:        3.4.0
+    Version:        4.0.0
     Author:         Robert Poulin
     Creation Date:  2016-06-09
-    Updated:        2023-10-14
+    Updated:        2024-04-12
     License:        MIT
 
     TODO:
+    - Reorganize modules
+    - Improve types: Collections.Generic, Enum, PsCustomObject
     - ValueFromPipeline
     - Input Validation
     - LitteralPath
     - ShouldProcess
-    - Write-Verbose
+    - Write-Verbose / Write-Debug
     - Docstrings!
     - https://github.com/PowerShellOrg/Plaster
 
