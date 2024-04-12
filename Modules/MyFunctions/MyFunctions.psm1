@@ -3,7 +3,7 @@
     My general-use functions.
 
 .NOTES
-    Version:        4.0.0
+    Version:        4.1.0
     Author:         Robert Poulin
     Creation Date:  2016-06-09
     Updated:        2024-04-12
@@ -26,6 +26,13 @@ Set-StrictMode -Version Latest
 
 $DirSep = [IO.Path]::DirectorySeparatorChar
 $PathSep = [IO.Path]::PathSeparator
+
+enum MessageStyle {
+    Normal
+    Header
+    Warning
+    Error
+}
 
 Push-Location -Path $Null -StackName LocationStack
 
@@ -725,8 +732,7 @@ function Write-Message {
         [String[]] $Message,
 
         [Parameter(Position = 2)]
-        [ValidateSet('Normal', 'Header', 'Warning', 'Error')]
-        [String] $Style = 'Normal',
+        [MessageStyle] $Style = [MessageStyle]::Normal,
 
         [Parameter()] [ConsoleColor] $Color,
 
@@ -741,26 +747,26 @@ function Write-Message {
 
     begin {
         $format = @{
+            DateTimeFormat = 'HH:mm:ss'
             NoNewLine = $NoNewline
             ShowTime = $Time
-            DateTimeFormat = 'HH:mm:ss'
         }
 
         switch ($Style) {
-            'Normal' {
-                $format.Color = 'Gray'
+            Normal {
+                $format.Color = [ConsoleColor]::Gray
             }
-            'Header' {
-                $format.Color = 'Cyan'
+            Header {
+                $format.Color = [ConsoleColor]::Cyan
                 $format.LinesBefore = 1
                 $format.LinesAfter = 1
                 $format.StartTab = 1
             }
-            'Warning' {
-                $format.Color = 'Yellow'
+            Warning {
+                $format.Color = [ConsoleColor]::Yellow
             }
-            'Error' {
-                $format.Color = 'Red'
+            Error {
+                $format.Color = [ConsoleColor]::Red
                 $format.LinesBefore = 1
                 $format.LinesAfter = 1
             }
