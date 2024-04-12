@@ -331,10 +331,10 @@ function New-SimpleFunction {
                 Value = $Value
                 Force = $Force
             }
-            $newFunction = New-Item @newItemArgs -Force:$Force
+            $newFunction = New-Item @newItemArgs
         }
 
-        if ($Alias -and $Null -ne $NewFunction) {
+        if ($Alias -and $Null -ne $newFunction) {
             Set-Alias -Name $Alias -Value $newFunction -Force:$Force -Scope Global
         }
 
@@ -631,10 +631,7 @@ function Test-Command {
 
 
 function Update-Location {
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute(
-        'PSUseShouldProcessForStateChangingFunctions', '', Justification = 'No system state change.'
-    )]
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'None')]
     [OutputType()]
     [Alias('cd')]
     param(
@@ -642,6 +639,7 @@ function Update-Location {
     )
 
     process {
+        if (!($PSCmdlet.ShouldProcess($Path))) { return }
         if ($Null -eq $Path) {
             Pop-Location -StackName LocationStack
         }
