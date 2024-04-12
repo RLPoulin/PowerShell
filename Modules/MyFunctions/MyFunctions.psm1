@@ -3,7 +3,7 @@
     My general-use functions.
 
 .NOTES
-    Version:        4.1.0
+    Version:        4.1.1
     Author:         Robert Poulin
     Creation Date:  2016-06-09
     Updated:        2024-04-12
