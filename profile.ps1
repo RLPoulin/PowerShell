@@ -3,7 +3,7 @@
     My PowerShell profile.
 
 .NOTES
-    Version:        7.0.0
+    Version:        7.1.0
     Author:         Robert Poulin
     Creation Date:  2016-06-09
     Updated:        2024-04-12
@@ -13,18 +13,17 @@
 
 #Requires -Version 7.4
 
-[Diagnostics.CodeAnalysis.SuppressMessageAttribute(
-    'PSAvoidUsingInvokeExpression', '', Justification = 'Used for init of oh-my-posh and rustup.'
-)]
-[CmdletBinding()] Param()
+[CmdletBinding()] Param(
+    [Parameter()] [Switch] $Force
+)
 
 if (!([Environment]::UserInteractive) -or ($Host.Name -eq 'ConsoleHost' -and $Host.Version -lt '7.4')) { exit }
 
-Import-Module -Name PSWriteColor -Global -NoClobber
-Import-Module -Name Terminal-Icons -Global -NoClobber
+Import-Module -Name PSWriteColor -NoClobber
+Import-Module -Name Terminal-Icons -NoClobber
 
-Import-Module -Name MyFunctions -Global -NoClobber -Force
-Import-Module -Name DevFunctions -Global -NoClobber -Force
+Import-Module -Name MyFunctions -Force:$Force
+Import-Module -Name DevFunctions -Force:$Force
 
 
 # Environment variables
@@ -34,7 +33,6 @@ $PSProfile = $PSCommandPath
 $Env:CodeFolder = (Resolve-Path "$HOME\Code" -ErrorAction Ignore)?.Path
 
 $Env:BAT_THEME = 'Visual Studio Dark+'
-$Env:BROWSER = 'msedge'
 $Env:EDITOR = 'code'
 $Env:POSH_GIT_ENABLED = 1
 $Env:POSH_THEMES_PATH = (Resolve-Path "$($Env:LOCALAPPDATA)\Programs\oh-my-posh\themes" -ErrorAction Ignore)?.Path
@@ -43,19 +41,36 @@ $Env:VIRTUAL_ENV_DISABLE_PROMPT = 1
 
 # Aliases
 
-Set-Alias -Name 'profile' -Value $PSCommandPath
-
-New-SimpleFunction -Alias 'ls' -Name Get-ChildItemWide -Value { Get-ChildItem @args | Format-Wide -AutoSize }
 Set-Alias -Name 'll' -Value Get-ChildItem
-New-ProxyCommand -Alias 'la' -Name Get-HiddenChildItem -Value Get-ChildItem -Default @{ 'Force' = $True }
+New-SimpleFunction -Name Get-ChildItemWide -Value { Get-ChildItem @args | Format-Wide -AutoSize } -Alias 'ls'
+New-ProxyCommand -Name Get-HiddenChildItem -Value Get-ChildItem -Default @{ 'Force' = $True } -Alias 'la'
 
-New-SimpleFunction -Alias '~' -Name Set-LocationToHome -Value { Update-Location $HOME }
-New-SimpleFunction -Alias '..' -Name Set-LocationToParent -Value { Update-Location '..' }
-New-ProxyCommand -Alias 'rd' -Name Remove-Directory -Value Remove-Item -Default @{ 'Recurse' = $True }
+New-SimpleFunction -Name Set-LocationToHome -Value { Update-Location $HOME } -Alias '~'
+New-SimpleFunction -Name Set-LocationToParent -Value { Update-Location '..' } -Alias '..'
+New-ProxyCommand -Name Remove-Directory -Value Remove-Item -Default @{ 'Recurse' = $True } -Alias 'rd'
 
 Set-Alias -Name 'gh' -Value Get-Help
-New-ProxyCommand -Alias 'gho' -Name Get-HelpOnline -Value Get-Help -Default @{ 'Online' = $True }
-New-ProxyCommand -Alias 'ghf' -Name Get-HelpFull -Value Get-Help -Default @{ 'Full' = $True }
+New-ProxyCommand -Name Get-HelpOnline -Value Get-Help -Default @{ 'Online' = $True } -Alias 'gho'
+New-ProxyCommand -Name Get-HelpFull -Value Get-Help -Default @{ 'Full' = $True } -Alias 'ghf'
+
+
+# Profile Functions
+
+function Edit-Profile {
+    [CmdletBinding()] [Alias('edp')] param()
+
+    Update-Location -Path (Split-Path $PSProfile -Parent)
+    & $Env:Editor "$PSProfile"
+    Update-Location
+}
+
+function Set-Profile {
+    [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'Low')] [Alias('profile')] param()
+
+    if ($PSCmdlet.ShouldProcess("$PSProfile")) {
+        . $PSProfile -Force
+    }
+}
 
 
 # Set Prompt
@@ -67,24 +82,47 @@ $PSReadLineOptions = @{
     PredictionViewStyle = 'ListView'
 }
 Set-PSReadLineOption @PSReadLineOptions -WarningAction SilentlyContinue
-Set-PSReadLineKeyHandler -Chord UpArrow -Function HistorySearchBackward
-Set-PSReadLineKeyHandler -Chord DownArrow -Function HistorySearchForward
-Set-PSReadLineKeyHandler -Chord 'Alt+UpArrow' -Function YankLastArg
-Set-PSReadLineKeyHandler -Chord 'Alt+RightArrow' -Function ForwardWord
-Set-PSReadLineKeyHandler -Chord Tab -Function MenuComplete
-Set-PSReadLineKeyHandler -Chord 'Shift+Tab' -Function Complete
-oh-my-posh init pwsh --config (Join-Path -Path $PSFolder -ChildPath prompt-pure.omp.yaml) | Invoke-Expression
+$PSReadLineKeys = @{
+    UpArrow = 'HistorySearchBackward'
+    DownArrow = 'HistorySearchForward'
+    'Alt+UpArrow' = 'YankLastArg'
+    'Alt+RightArrow' = 'ForwardWord'
+    Tab = 'MenuComplete'
+    'Shift+Tab' = 'Complete'
+}
+foreach ($key in $PSReadLineKeys.Keys) {
+    Set-PSReadLineKeyHandler -Chord $key -Function $PSReadLineKeys[$key]
+}
+
+function Invoke-OhMyPosh {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute(
+        'PSAvoidUsingInvokeExpression', '', Justification = 'Used to initialize Oh-My-Posh.'
+    )]
+    [CmdletBinding()] [Alias('omp')] param()
+
+    oh-my-posh init pwsh --config (Join-Path -Path $PSFolder -ChildPath prompt-pure.omp.yaml) | Invoke-Expression
+    oh-my-posh completion powershell | Out-String | Invoke-Expression
+}
+Invoke-OhMyPosh
 
 
 # Argument Completers
 
-if (Test-Command rustup) {
-    # Argument completer for rustup
-    rustup completions powershell | Out-String | Invoke-Expression
+function Register-RustCompleter {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute(
+        'PSAvoidUsingInvokeExpression', '', Justification = 'Used to get rustup completions.'
+    )]
+    [CmdletBinding()] param()
+
+    if (Test-Command rustup) {
+        rustup completions powershell | Out-String | Invoke-Expression
+    }
+
+    Remove-Item function:Register-RustCompleter
 }
+Register-RustCompleter
 
 Register-ArgumentCompleter -Native -CommandName winget -ScriptBlock {
-    # Argument completer for winget
     param($wordToComplete, $commandAst, $cursorPosition)
 
     [Console]::InputEncoding = [Console]::OutputEncoding = $OutputEncoding = [System.Text.Utf8Encoding]::new()
@@ -99,19 +137,19 @@ Register-ArgumentCompleter -Native -CommandName winget -ScriptBlock {
 # On Start
 
 function Show-Greeting {
-    $version = @(
-        "Powershell $($PSVersionTable.PSEdition) $($PSVersionTable.PSVersion)"
-        ' on '
-        [Environment]::OSVersion.VersionString
-    )
-    $versionFormat = @{
-        Color = 'Yellow', 'White', 'Blue'
+    $versionArgs = @{
+        Text = "Powershell $($PSVersionTable.PSEdition) $($PSVersionTable.PSVersion)", ' on ', [Environment]::OSVersion.VersionString
+        Color = 'Yellow', 'White', 'Cyan'
         LinesBefore = 1
         LinesAfter = 1
     }
-    Write-Color -Text $version @versionFormat
-    Write-Color -Text "Hi $([Environment]::UserName)!" -Color Magenta -LinesAfter 1
-    Remove-Item -Path Function:Show-Greeting
+    $nameArgs = @{
+        Text = 'Hi Bob! ', '[', [Environment]::UserName, '@', [Environment]::MachineName, ']'
+        Color = 'Magenta', 'White', 'Cyan', 'White', 'Cyan', 'White'
+        LinesAfter = 1
+    }
+    Write-Color @versionArgs
+    Write-Color @nameArgs
 }
 
 Show-Greeting
