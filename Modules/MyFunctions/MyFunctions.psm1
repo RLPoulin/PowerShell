@@ -3,10 +3,10 @@
     My general-use functions.
 
 .NOTES
-    Version:        4.1.1
+    Version:        4.2.0
     Author:         Robert Poulin
     Creation Date:  2016-06-09
-    Updated:        2024-04-12
+    Updated:        2024-04-29
     License:        MIT
 
     TODO:
@@ -14,12 +14,10 @@
     - Improve types: Collections.Generic, Enum, PsCustomObject
     - ValueFromPipeline
     - Input Validation
-    - LitteralPath
+    - LiteralPath
     - ShouldProcess
     - Write-Verbose / Write-Debug
     - Docstrings!
-    - https://github.com/PowerShellOrg/Plaster
-
 #>
 
 Set-StrictMode -Version Latest
@@ -30,8 +28,10 @@ $PathSep = [IO.Path]::PathSeparator
 enum MessageStyle {
     Normal
     Header
-    Warning
     Error
+    Warning
+    Verbose
+    Debug
 }
 
 Push-Location -Path $Null -StackName LocationStack
@@ -243,7 +243,7 @@ function New-Link {
     [Alias('ln')]
     param (
         [Parameter(Position = 1, Mandatory)]
-        [ValidateNotNullOrEmpty()] [ValidateScript( { !(Test-Path -Path $_) } )]
+        [ValidateNotNullOrEmpty()]
         [Alias('Source')]
         [Object] $Path,
 
@@ -252,13 +252,30 @@ function New-Link {
         [Alias('Value')]
         [Object] $Target,
 
+        [Parameter()] [Switch] $Force,
+
         [Parameter()] [Switch] $PassThru
     )
 
     process {
-        $linkPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Path)
         $targetPath = Resolve-Path $Target
-        $link = New-Item -Path $linkPath -ItemType SymbolicLink -Value $targetPath
+
+        if (Test-Path -Path $Path -PathType Container) {
+            $linkPath = Join-Path (Resolve-Path -Path $Path) (Split-Path $targetPath -Leaf)
+        }
+        else {
+            $linkPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Path)
+        }
+        if (Test-Path -Path $linkPath) {
+            $Force = $Force -or $PSCmdlet.ShouldContinue($linkPath, 'Overwrite')
+            if (!($Force)) {
+                throw "'$linkPath' already exists."
+            }
+        }
+
+        if (!($Force -or $PSCmdlet.ShouldProcess($linkPath))) { return }
+        $link = New-Item -Path $linkPath -ItemType SymbolicLink -Value $targetPath -Force:$Force
+
         if ($PassThru) { $link }
     }
 }
@@ -544,14 +561,14 @@ function Start-Shutdown {
             Status = 'Waiting...'
         }
 
-        if (!($PSCmdlet.ShouldProcess($timeString, "$action at"))) { return }
+        if (!($PSCmdlet.ShouldProcess($timeString, $action))) { return }
 
         do {
-            Start-Sleep -Seconds 1
             $remaining = [Math]::Max(0, ($DateTime - (Get-Date)).TotalSeconds)
             $progressArgs.SecondsRemaining = $remaining
-            $progressArgs.PercentComplete = 100 * $remaining / $total
+            $progressArgs.PercentComplete = $remaining / $total * 100
             Write-Progress @progressArgs
+            Start-Sleep -Seconds ($remaining -ge 120 ? 5 : 1)
         } while ( $remaining -gt 0 )
 
         Write-Progress -Activity $progressArgs.Activity -Complete
@@ -732,42 +749,71 @@ function Write-Message {
         [Parameter(Position = 2)]
         [MessageStyle] $Style = [MessageStyle]::Normal,
 
+        [Parameter()] [String] $Prefix = $Null,
+
         [Parameter()] [ConsoleColor] $Color,
 
-        [Parameter()] [ValidateRange(0, 10)] [Int] $Pad,
+        [Parameter()] [ValidateRange(0, 40)] [Int] $Pad,
 
-        [Parameter()] [ValidateRange(0, 10)] [Int] $Tab,
+        [Parameter()] [ValidateRange(0, 40)] [Int] $Tab,
 
         [Parameter()] [Switch] $Time,
 
-        [Parameter()] [Switch] $NoNewline
+        [Parameter()] [Switch] $NoNewline,
+
+        [Parameter()] [Switch] $PassThru,
+
+        $DebugPreference = $PSCmdlet.GetVariableValue('DebugPreference'),
+        $VerbosePreference = $PSCmdlet.GetVariableValue('VerbosePreference')
+
     )
 
     begin {
         $format = @{
             DateTimeFormat = 'HH:mm:ss'
             NoNewLine = $NoNewline
-            ShowTime = $Time
         }
 
         switch ($Style) {
             Normal {
+                $prefixMessage = $Null
                 $format.Color = [ConsoleColor]::Gray
             }
             Header {
+                $prefixMessage = '* '
                 $format.Color = [ConsoleColor]::Cyan
-                $format.LinesBefore = 1
                 $format.LinesAfter = 1
+                $format.LinesBefore = 1
                 $format.StartTab = 1
             }
+            Error {
+                $prefixMessage = 'ERROR: '
+                $format.Color = [ConsoleColor]::Red
+                $format.LinesAfter = 1
+                $format.LinesBefore = 1
+            }
             Warning {
+                $prefixMessage = 'WARNING: '
                 $format.Color = [ConsoleColor]::Yellow
             }
-            Error {
-                $format.Color = [ConsoleColor]::Red
-                $format.LinesBefore = 1
-                $format.LinesAfter = 1
+            Verbose {
+                $prefixMessage = 'Verbose: '
+                $format.Color = [ConsoleColor]::DarkYellow
+                $format.NoConsoleOutput = ($VerbosePreference -eq 'SilentlyContinue') -and ($DebugPreference -eq 'SilentlyContinue')
             }
+            Debug {
+                $prefixMessage = 'Debug: '
+                $format.Color = [ConsoleColor]::DarkGray
+                $format.NoConsoleOutput = $DebugPreference -eq 'SilentlyContinue'
+                $format.ShowTime = $True
+            }
+        }
+
+        if ('Prefix' -in $PSBoundParameters.Keys) {
+            $prefixMessage = $Prefix
+        }
+        if ('Time' -in $PSBoundParameters.Keys) {
+            $format.ShowTime = $Time
         }
         if ('Color' -in $PSBoundParameters.Keys) {
             $format.Color = $Color
@@ -779,9 +825,17 @@ function Write-Message {
         if ('Tab' -in $PSBoundParameters.Keys) {
             $format.StartTab = $Tab
         }
+        if ('Time' -in $PSBoundParameters.Keys) {
+            $format.ShowTime = $Time
+        }
     }
 
     process {
-        Write-Color -Text $Message @format
+        foreach ($msg in $Message) {
+            Write-Color -Text $prefixMessage, $msg @format
+            if ($PassThru) {
+                $msg
+            }
+        }
     }
 }
