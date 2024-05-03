@@ -13,62 +13,50 @@ blocks:
         properties:
           mapped_locations:
             ~/Code: "\uF0F6"
-            ~/winhome: "\uF17A"
+            "B:": "\uF0F6"
           style: full
         style: plain
-        template: "{{ path .Path .Location }}\
-          {{ if not .Writable }} <red>\uF023</>{{ end }} "
+        template: "{{ path .Path .Location }}{{ if not .Writable }} <red>\uF023</>{{ end }} "
 
   - type: prompt
     alignment: left
     segments:
+      - type: project
+        foreground: lightBlue
+        style: plain
+        template: "{{ if .Error }}{{ .Error }} {{ else }} \uF03D6 {{ if .Name }}{{ .Name }} {{ end }}{{ if .Version }}{{.Version}} {{ end }}{{ end }}"
       - type: git
-        foreground: default
+        foreground: white
         properties:
           branch_ahead_icon: "<lightGreen>\u21E1</> "
           branch_behind_icon: "<lightGreen>\u21E3</> "
-          branch_icon: "\uE725 "
+          branch_icon: " \uE725 "
           fetch_status: true
           fetch_upstream_icon: true
-          github_icon: ""
+          github_icon: "\uEA84 "
         style: plain
-        template: "{{ .HEAD }}{{ .BranchStatus }} \
-          {{ if .Working.Changed }}{{ .Working.String }} {{ end }}\
-          {{ if and (.Staging.Changed) (.Working.Changed) }}| {{ end }}\
-          {{ if .Staging.Changed }}\uF046 {{ .Staging.String }} {{ end }}\
-          {{ if gt .StashCount 0}}\uF692 {{ .StashCount }} {{ end }}\
-          {{ if gt .WorktreeCount 0 }}\uF1BB {{ .WorktreeCount }} {{ end }}"
+        template: "{{ .HEAD }}{{ .BranchStatus }}{{ if .Working.Changed }}{{ .Working.String }} {{ end }}{{ if and (.Staging.Changed) (.Working.Changed) }}| {{ end }}{{ if .Staging.Changed }}\uF046 {{ .Staging.String }} {{ end }}{{ if gt .StashCount 0}}\uF0193 {{ .StashCount }} {{ end }}{{ if gt .WorktreeCount 0 }}\uF1BB {{ .WorktreeCount }} {{ end }}"
       - type: node
         foreground: red
         properties:
           display_mode: files
           fetch_package_manager: true
-          npm_icon: "\uF898 "
-          yarn_icon: "\uF61A "
+          npm_icon: " \uF0399 "
+          yarn_icon: " \uE6A7 "
         style: plain
-        template:
-          "{{ if .PackageManagerIcon }}{{ .PackageManagerIcon }}{{ end }}\
-          {{ .Full }} "
+        template: "{{ if .PackageManagerIcon }}{{ .PackageManagerIcon }}{{ end }}{{ .Full }} "
       - type: python
         foreground: green
         properties:
           display_mode: context
         style: plain
-        template:
-          " \uE235 {{ if .Error }}{{ .Error }}{{ else }}{{ url .Full .URL }} \
-          {{ if .Venv }}{{ .Venv }} {{ end }}{{ end }}"
+        template: "  \uE235 {{ if .Error }}{{ .Error }}{{ else }}{{ url .Full .URL }} {{ if .Venv }}{{ .Venv }} {{ end }}{{ end }}"
       - type: rust
         foreground: yellow
         properties:
           display_mode: files
         style: plain
-        template: " \uE7a8 {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} "
-      - type: project
-        foreground: parentForeground
-        style: plain
-        template: "{{ if .Error }}{{ .Error }} {{ else }}\uF8D5 \
-          {{ if .Name }}{{ .Name }} {{ end }}\
-          {{ if .Version }}{{.Version}} {{ end }}{{ end }}"
+        template: "  \uE7A8 {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} "
 
   - type: rprompt
     alignment: right
@@ -76,8 +64,7 @@ blocks:
       - type: sysinfo
         foreground: green
         style: plain
-        template: "{{ if gt .PhysicalPercentUsed 60.0 }}\uF85A \
-          {{ .PhysicalPercentUsed }}% {{ end }}"
+        template: "{{ if gt .PhysicalPercentUsed 60.0 }}\uF035B {{ .PhysicalPercentUsed }}% {{ end }}"
       - type: exit
         foreground: red
         style: plain
@@ -88,7 +75,7 @@ blocks:
           style: round
           threshold: 2000
         style: plain
-        template: "\uFA89 {{ .FormattedMs }} "
+        template: "\uF0589 {{ .FormattedMs }} "
       - type: time
         foreground: lightBlue
         properties:
