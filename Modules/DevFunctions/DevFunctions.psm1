@@ -3,16 +3,16 @@
     The functions I use for sofware development.
 
 .NOTES
-    Version:        4.0.0
+    Version:        4.0.1
     Author:         Robert Poulin
     Creation Date:  2019-12-30
-    Updated:        2024-04-12
+    Updated:        2024-04-30
     License:        MIT
 #>
 
 Set-StrictMode -Version Latest
 
-$DirSep = [IO.Path]::DirectorySeparatorChar
+$dirSeparator = [IO.Path]::DirectorySeparatorChar
 
 
 function Enter-Project {
@@ -28,16 +28,16 @@ function Enter-Project {
 
     process {
         if (!(Test-Path -Path $Project)) {
-            $Project = Join-Path -Path $Env:CodeFolder -ChildPath $Project
+            $Project = Join-Path -Path $CodeFolder -ChildPath $Project
         }
-        Update-Location -Path $Project -Follow
+        Update-Location -Path $Project
 
         if (Test-Path -Path 'pyproject.toml') {
-            Write-Message -Message 'Python Environment:' -Style 'Header'
+            Write-Message -Message 'Python Environment' -Style 'Header'
             Enter-PythonEnvironment
         }
         if (Test-Path -Path 'cargo.toml') {
-            Write-Message -Message 'Rust Environment:' -Style 'Header'
+            Write-Message -Message 'Rust Environment' -Style 'Header'
             Show-RustSource
         }
         if (Test-Path -Path '.git' -PathType Container) {
@@ -65,7 +65,9 @@ function Enter-PythonEnvironment {
             (Test-Command -Name 'poetry') -and
             '[tool.poetry]' -in (Get-Content -Path 'pyproject.toml' -ErrorAction Ignore)
         ) {
-            . "$(poetry env info -p)\Scripts\activate.ps1"
+            $poetryEnv = poetry env info -p
+            if (Test-Path -Path $poetryEnv) { . "$poetryEnv\Scripts\activate.ps1" }
+            else { Write-Message "Can't activate poetry environment: '$poetryEnv'" -Style Error }
         }
         Show-PythonSource
     }
@@ -152,9 +154,9 @@ function Show-PythonSource {
     Param()
 
     process {
-        $python = (Get-Command -Name python).Source
+        $python = (Get-Command -Name python -ErrorAction Stop).Source
         $source = @(
-            (Split-Path -Path $python -Parent).Replace($Home, '~') + $DirSep
+            (Split-Path -Path $python -Parent).Replace($Home, '~') + $dirSeparator
             Split-Path -Path $python -Leaf
             " [$(& $python --version)]"
         )
@@ -170,9 +172,9 @@ function Show-RustSource {
     Param()
 
     process {
-        $rustc = (Get-Command -Name rustc).Source
+        $rustc = (Get-Command -Name rustc -ErrorAction Stop).Source
         $source = @(
-            (Split-Path -Path $rustc -Parent).Replace($Home, '~') + $DirSep
+            (Split-Path -Path $rustc -Parent).Replace($Home, '~') + $dirSeparator
             Split-Path -Path $rustc -Leaf
             " [$(& $rustc --version)]"
         )
@@ -204,11 +206,11 @@ function Update-Project {
     [OutputType()]
     [Alias('udp')]
     Param (
-        # Location of the root folder containing the projects. Default: $Env:CodeFolder
+        # Location of the root folder containing the projects. Default: $CodeFolder
         [Parameter(Position = 1, ValueFromPipeline)]
         [ValidateNotNullOrEmpty()]
         [ValidateScript({ Test-Path -Path $_ -PathType Container })]
-        [String] $Path = $Env:CodeFolder
+        [String] $Path = $CodeFolder
     )
 
     begin {
