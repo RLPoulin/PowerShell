@@ -3,10 +3,10 @@
     My general-use functions.
 
 .NOTES
-    Version:        4.2.0
+    Version:        4.2.1
     Author:         Robert Poulin
     Creation Date:  2016-06-09
-    Updated:        2024-04-29
+    Updated:        2024-04-30
     License:        MIT
 
     TODO:
@@ -22,8 +22,8 @@
 
 Set-StrictMode -Version Latest
 
-$DirSep = [IO.Path]::DirectorySeparatorChar
-$PathSep = [IO.Path]::PathSeparator
+$dirSeparator = [IO.Path]::DirectorySeparatorChar
+$pathSeparator = [IO.Path]::PathSeparator
 
 enum MessageStyle {
     Normal
@@ -55,7 +55,7 @@ function Add-EnvPath {
     }
 
     process {
-        [String[]] $newPathItems = (Resolve-Path -Path $Path).Path.TrimEnd($DirSep)
+        [String[]] $newPathItems = (Resolve-Path -Path $Path).Path.TrimEnd($dirSeparator)
 
         if ($First) {
             $pathItems = $newPathItems + $pathItems
@@ -68,7 +68,7 @@ function Add-EnvPath {
     end {
         $pathItems = Select-Object -InputObject $pathItems -Unique
         if ($PSCmdlet.ShouldProcess('Env:PATH')) {
-            $Env:PATH = Join-String -InputObject $pathItems -Separator $PathSep
+            $Env:PATH = Join-String -InputObject $pathItems -Separator $pathSeparator
         }
         if ($PassThru) { Get-EnvPath }
     }
@@ -175,7 +175,7 @@ function Get-EnvPath {
     param()
 
     process {
-        [String[]] ($Env:PATH).Split($PathSep).Trim().TrimEnd($DirSep).Where({ $_.Length -gt 0 })
+        [String[]] ($Env:PATH).Split($pathSeparator).Trim()
     }
 }
 
@@ -473,17 +473,29 @@ function Show-EnvPath {
     process {
         [String[]] $pathEntries = @()
         foreach ($path in (Get-EnvPath)) {
+            if ($Null -like $path) {
+                Write-Message -Text "'$path' is empty." -Style Debug
+                Write-Color -Text "'$path'" -Color Red
+            }
             if (Test-Path -Path $path) {
-                $pathName = (Get-Item -Path $path).FullName
+                $pathName = (Get-Item -Path $path).FullName.TrimEnd($pathSeparator)
                 if ($pathEntries -contains $pathName) {
-                    Write-Color -Text $pathName -Color Yellow
+                    Write-Message -Text "'$path' -> '$pathName' already in the list." -Style Debug
+                    Write-Color -Text $path -Color Yellow
+                }
+                elseif ($pathName -cne $path) {
+                    Write-Message -Text "'$path' <-> '$pathName' not identical." -Style Debug
+                    Write-Color -Text $path -Color Blue
+                    $pathEntries += $pathName
                 }
                 else {
-                    Write-Color -Text $pathName -Color Green
+                    Write-Message -Text "'$path' -> '$pathName' okay." -Style Debug
+                    Write-Color -Text $path -Color Green
                     $pathEntries += $pathName
                 }
             }
             else {
+                Write-Message -Text "'$path' does not exist." -Style Debug
                 Write-Color -Text $path -Color Red
             }
         }
@@ -661,8 +673,7 @@ function Update-Location {
             Pop-Location -StackName LocationStack
         }
         else {
-            $pushTarget = (Get-Item -Path $Path -ErrorAction Stop).LinkTarget ?? $Path
-            Push-Location -Path $pushTarget -StackName LocationStack
+            Push-Location -Path $Path -StackName LocationStack
         }
     }
 }
