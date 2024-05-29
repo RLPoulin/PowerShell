@@ -15,17 +15,17 @@
     None
 
 .NOTES
-    Version:        2.0.0
+    Version:        2.1.0
     Author:         Robert Poulin
     Creation Date:  2022-07-06
-    Updated:        2024-04-15
+    Updated:        2024-05-29
     License:        MIT
 #>
 
 #Requires -Version 7.4
 
 [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPositionalParameters', '', Justification = 'Messes with scoop.')]
-[CmdletBinding(ConfirmImpact = 'High', SupportsShouldProcess)]
+[CmdletBinding(ConfirmImpact = 'Medium', SupportsShouldProcess)]
 Param (
     # If true, will shutdown the computer 1 minute after the updates.
     [Parameter()] [Switch] $Shutdown,
@@ -114,6 +114,9 @@ process {
         Write-Message -Message "Starting 'Update-Module -Scope AllUsers'." -Style Debug
         gsudo { param($a); Update-Module -Scope AllUsers @a } -args $updateModuleArgs
     }
+
+    Write-Message -Message 'Removing desktop shortcuts...' -Style Debug
+    Get-ChildItem -Path ([Environment]::GetFolderPath('Desktop')) -Filter '*.lnk' | Remove-Item
 
     if ($PSCmdlet.ShouldProcess('Windows Update')) {
         Write-Message -Message 'Running Windows Update...' @headerStyle

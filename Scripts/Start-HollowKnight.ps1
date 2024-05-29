@@ -12,10 +12,10 @@
     None
 
 .NOTES
-    Version:        1.1.1
+    Version:        1.1.2
     Author:         Robert Poulin
     Creation Date:  2021-12-31
-    Updated:        2022-07-10
+    Updated:        2024-05-29
     License:        MIT
 
 #>
@@ -28,8 +28,8 @@ Set-StrictMode -Version Latest
 
 Import-Module -Name PSWriteColor -NoClobber
 
-$GameLink = "$Env:AppData\Microsoft\Windows\Start Menu\Programs\Hollow Knight.lnk"
-$SaveFolder = "$Home\AppData\LocalLow\Team Cherry\Hollow Knight"
+$GameLink = "$([Environment]::GetFolderPath('StartMenu'))\Programs\Hollow Knight.lnk"
+$SaveFolder = "$([Environment]::GetFolderPath('UserProfile'))\AppData\LocalLow\Team Cherry\Hollow Knight"
 
 
 function Rename-ItemColoredOutput {
