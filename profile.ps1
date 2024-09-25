@@ -3,10 +3,10 @@
     My PowerShell profile.
 
 .NOTES
-    Version:        7.3.0
+    Version:        7.3.1
     Author:         Robert Poulin
     Creation Date:  2016-06-09
-    Updated:        2024-04-30
+    Updated:        2024-09-25
     License:        MIT
 
 #>
@@ -23,6 +23,9 @@ if (!([Environment]::UserInteractive) -or ($Host.Name -eq 'ConsoleHost' -and $Ho
 
 
 # → Import modules
+
+Import-Module -Name Microsoft.WinGet.Client -NoClobber
+Import-Module -Name Microsoft.WinGet.CommandNotFound -NoClobber
 
 Import-Module -Name gsudoModule -NoClobber
 Import-Module -Name PSWriteColor -NoClobber
@@ -117,24 +120,24 @@ $ProfileReadlineKeys | ForEach-Object { Set-PSReadLineKeyHandler @_ }
 
 Write-Message -Message 'Registering argument completers...' -Style Verbose -Color Cyan
 
-oh-my-posh completion powershell | Out-String | Invoke-Expression
-
-if (Test-Command rustup) {
-    rustup completions powershell | Out-String | Invoke-Expression
-}
-else {
-    Write-Message -Message "Can't register Rust completions: rustup not found!" -Style Verbose -Color Red
-}
-
-Register-ArgumentCompleter -Native -CommandName winget -ScriptBlock {
-    param($wordToComplete, $commandAst, $cursorPosition)
-    [Console]::InputEncoding = [Console]::OutputEncoding = $OutputEncoding = [System.Text.Utf8Encoding]::new()
-    $Local:word = $wordToComplete.Replace('"', '""')
-    $Local:ast = $commandAst.ToString().Replace('"', '""')
-    winget complete --word="$Local:word" --commandline "$Local:ast" --position $cursorPosition | ForEach-Object {
-        [System.Management.Automation.CompletionResult]::new($_, $_, 'ParameterValue', $_)
+if (Test-Command winget) {
+    Register-ArgumentCompleter -Native -CommandName winget -ScriptBlock {
+        param($wordToComplete, $commandAst, $cursorPosition)
+        [Console]::InputEncoding = [Console]::OutputEncoding = $OutputEncoding = [System.Text.Utf8Encoding]::new()
+        $Local:word = $wordToComplete.Replace('"', '""')
+        $Local:ast = $commandAst.ToString().Replace('"', '""')
+        winget complete --word="$Local:word" --commandline "$Local:ast" --position $cursorPosition | ForEach-Object {
+            [System.Management.Automation.CompletionResult]::new($_, $_, 'ParameterValue', $_)
+        }
     }
 }
+else { Write-Message -Message "Can't register WinGet completions: winget not found!" -Style Warning }
+
+if (Test-Command oh-my-posh) { oh-my-posh completion powershell | Out-String | Invoke-Expression }
+else { Write-Message -Message "Can't register Oh My Posh completions: oh-my-posh not found!" -Style Warning }
+
+if (Test-Command rustup) { rustup completions powershell | Out-String | Invoke-Expression }
+else { Write-Message -Message "Can't register Rust completions: rustup not found!" -Style Verbose -Color Red }
 
 
 # → Show greeting.
