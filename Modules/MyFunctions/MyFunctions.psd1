@@ -12,7 +12,7 @@
     RootModule = 'MyFunctions.psm1'
 
     # Version number of this module.
-    ModuleVersion = '4.2.1'
+    ModuleVersion = '4.3.0'
 
     # Supported PSEditions
     CompatiblePSEditions = @('Core')

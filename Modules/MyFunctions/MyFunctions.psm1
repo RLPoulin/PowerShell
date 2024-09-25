@@ -3,10 +3,10 @@
     My general-use functions.
 
 .NOTES
-    Version:        4.2.1
+    Version:        4.3.0
     Author:         Robert Poulin
     Creation Date:  2016-06-09
-    Updated:        2024-04-30
+    Updated:        2024-06-17
     License:        MIT
 
     TODO:
@@ -51,17 +51,18 @@ function Add-EnvPath {
     )
 
     begin {
-        [String[]] $pathItems = Get-EnvPath
+        [Collecions.Generic.List[String]] $pathItems = Get-EnvPath
     }
 
     process {
-        [String[]] $newPathItems = (Resolve-Path -Path $Path).Path.TrimEnd($dirSeparator)
-
-        if ($First) {
-            $pathItems = $newPathItems + $pathItems
-        }
-        else {
-            $pathItems += $newPathItems
+        foreach ($pathItem in $Path) {
+            $newPathItem = (Resolve-Path -Path $Path).Path.TrimEnd($dirSeparator)
+            if ($First) {
+                $pathItems.Insert(0, $newPathItem)
+            }
+            else {
+                $pathItems.Add($newPathItem)
+            }
         }
     }
 
@@ -70,7 +71,7 @@ function Add-EnvPath {
         if ($PSCmdlet.ShouldProcess('Env:PATH')) {
             $Env:PATH = Join-String -InputObject $pathItems -Separator $pathSeparator
         }
-        if ($PassThru) { Get-EnvPath }
+        if ($PassThru) { $pathItems }
     }
 }
 
@@ -175,7 +176,7 @@ function Get-EnvPath {
     param()
 
     process {
-        [String[]] ($Env:PATH).Split($pathSeparator).Trim()
+        [String[]] ($Env:PATH).Split($pathSeparator).TrimEnd($dirSeparator).Trim()
     }
 }
 
@@ -636,11 +637,13 @@ function Test-Command {
     .SYNOPSIS
         Test for the availability of a command.
     .DESCRIPTION
-        Returns true if the command is found by the Get-Command cmdlet.
+        Returns true if all commands are found by the Get-Command cmdlet.
     .EXAMPLE
-        if (Test-Command "Write-Out") { Write-Out "I exist!" }
+        if (Test-Command 'Write-Output') { Write-Output 'I exist!' }
+    .EXAMPLE
+        if (Test-Command 'echo', 'Write-Output') { Write-Output 'We exist!' }
     .INPUTS
-        String
+        String[]
     .OUTPUTS
         Boolean
     #>
@@ -648,12 +651,24 @@ function Test-Command {
     [CmdletBinding()]
     [OutputType([Boolean])]
     param(
-        [Parameter(Position = 1, Mandatory)]
-        [String] $Name
+        [Parameter(Position = 1, Mandatory, ValueFromPipeline)]
+        [String[]] $Name
     )
 
+    begin {
+        $testResults = [Collections.Generic.List[Boolean]] @()
+    }
+
     process {
-        [Boolean] (Get-Command -Name $Name -ErrorAction Ignore)
+        $Name | ForEach-Object {
+            $result = [Boolean] (Get-Command -Name $_ -ErrorAction SilentlyContinue)
+            Write-Verbose "Test-Command '$_': $result"
+            $testResults.Add($result)
+        }
+    }
+
+    end {
+        $testResults -notcontains $False
     }
 
 }
