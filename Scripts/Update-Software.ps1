@@ -15,10 +15,10 @@
     None
 
 .NOTES
-    Version:        2.1.0
+    Version:        2.2.0
     Author:         Robert Poulin
     Creation Date:  2022-07-06
-    Updated:        2024-05-29
+    Updated:        2024-07-12
     License:        MIT
 #>
 
@@ -45,6 +45,7 @@ begin {
     }
     Import-Module -Name MyFunctions @importArgs
     Import-Module -Name gsudoModule @importArgs
+    Import-Module -Name PSWindowsUpdate @importArgs
 
     $headerStyle = @{ Style = 'Header'; Time = $True }
 
@@ -90,7 +91,7 @@ process {
         . scoop update --all
     }
 
-    if ((Test-Command 'pipx') -and $PSCmdlet.ShouldProcess('Pipx')) {
+    if ((Test-Command 'pipx', 'py') -and $PSCmdlet.ShouldProcess('Pipx')) {
         Write-Message -Message 'Updating Python modules...' @headerStyle
         Write-Message -Message "Starting 'pip install --upgrade pip'." -Style Debug
         . py -m pip install --upgrade --user --upgrade-strategy eager --quiet pip
@@ -115,12 +116,28 @@ process {
         gsudo { param($a); Update-Module -Scope AllUsers @a } -args $updateModuleArgs
     }
 
-    Write-Message -Message 'Removing desktop shortcuts...' -Style Debug
-    Get-ChildItem -Path ([Environment]::GetFolderPath('Desktop')) -Filter '*.lnk' | Remove-Item
+    if ($PSCmdlet.ShouldProcess('Desktop shortcuts', 'Remove')) {
+        $getShortcutsArgs = @{
+            Path = @(
+                [Environment]::GetFolderPath('CommonDesktop')
+                [Environment]::GetFolderPath('Desktop')
+            )
+            Filter = '*.lnk'
+            Exclude = @('Adobe Digital Editions 4.5.lnk')
+        }
+        $desktopShortcuts = Get-ChildItem @getShortcutsArgs
+        $shortcutCounts = ($desktopShortcuts | Measure-Object).Count
+        if ($shortcutCounts) {
+            Write-Message -Message "Removing $shortcutCounts desktop shortcuts." -Style Debug
+            Remove-Item $desktopShortcuts
+        }
+        else {
+            Write-Message -Message 'No desktop shortcuts to remove.' -Style Debug
+        }
+    }
 
     if ($PSCmdlet.ShouldProcess('Windows Update')) {
         Write-Message -Message 'Running Windows Update...' @headerStyle
-        Import-Module -Name PSWindowsUpdate @importArgs
         $windowsUpdateArgs = @{
             Install = $True
             AcceptAll = $True
@@ -129,13 +146,27 @@ process {
             IgnoreReboot = [bool] !($Shutdown)
             Confirm = $False
         }
-        gsudo { param($a); Get-WindowsUpdate @a } -args $windowsUpdateArgs
+        gsudo { param($a); $null = Get-WindowsUpdate @a } -args $windowsUpdateArgs
     }
 
     Write-Message -Message 'Updates Completed!' @headerStyle
 }
 
 end {
+    if (!(Get-Process -Name 'AutoHotkey64' -ErrorAction SilentlyContinue)) {
+        $hotkeyPath = Join-Path -Path $Env:OneDrive -ChildPath 'Informatique\Windows\MyHotkeys.ahk'
+        if (Test-Path $hotkeyPath) {
+            Write-Message -Message "Restarting AutoHotkey script: '$hotkeyPath'." -Style Debug
+            & $hotkeyPath
+        }
+        else {
+            Write-Message -Message "Can't restart AutoHotkey script: '$hotkeyPath'." -Style Warning
+        }
+    }
+    else {
+        Write-Message -Message 'AutoHotkey already running.' -Style Debug
+    }
+
     if ($Shutdown) {
         Write-Message -Message 'Shutting down in 10 minutes!' -Style Warning
         Start-Shutdown -Minutes 10
@@ -145,4 +176,3 @@ end {
 clean {
     gsudo cache off *> $Null
 }
-
