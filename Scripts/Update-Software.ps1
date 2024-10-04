@@ -15,10 +15,10 @@
     None
 
 .NOTES
-    Version:        2.2.0
+    Version:        2.3.0
     Author:         Robert Poulin
     Creation Date:  2022-07-06
-    Updated:        2024-07-12
+    Updated:        2024-09-25
     License:        MIT
 #>
 
@@ -71,36 +71,36 @@ process {
             NoNewWindow = $True
             Wait = $True
         }
-        Write-Message -Message "Starting '$($wingetProcessArgs.FilePath) $($wingetProcessArgs.ArgumentList)'." -Style Debug
+        Write-Message -Message "Executing '$($wingetProcessArgs.FilePath) $($wingetProcessArgs.ArgumentList)'." -Style Debug
         gsudo { param($a); Start-Process @a } -args $wingetProcessArgs
     }
 
     if ((Test-Command 'scoop') -and $PSCmdlet.ShouldProcess('Scoop')) {
         Write-Message -Message 'Updating Scoop...' @headerStyle
-        Write-Message -Message "Starting 'scoop update'." -Style Debug
+        Write-Message -Message "Executing 'scoop update'." -Style Debug
         . scoop update *> $Null
-        Write-Message -Message "Starting 'scoop cleanup --global --all'." -Style Debug
+        Write-Message -Message "Executing 'scoop cleanup --global --all'." -Style Debug
         gsudo { . scoop cleanup --global --all *> $Null }
-        Write-Message -Message "Starting 'scoop cleanup --all'." -Style Debug
+        Write-Message -Message "Executing 'scoop cleanup --all'." -Style Debug
         . scoop cleanup --all *> $Null
 
         Write-Message -Message 'Updating Scoop applications...' @headerStyle
-        Write-Message -Message "Starting 'scoop update --global --all'." -Style Debug
+        Write-Message -Message "Executing 'scoop update --global --all'." -Style Debug
         gsudo { . scoop update --global --all }
-        Write-Message -Message "Starting 'scoop update --all'." -Style Debug
+        Write-Message -Message "Executing 'scoop update --all'." -Style Debug
         . scoop update --all
     }
 
-    if ((Test-Command 'pipx', 'py') -and $PSCmdlet.ShouldProcess('Pipx')) {
+    if ((Test-Command 'uv') -and $PSCmdlet.ShouldProcess('Python')) {
         Write-Message -Message 'Updating Python modules...' @headerStyle
-        Write-Message -Message "Starting 'pip install --upgrade pip'." -Style Debug
-        . py -m pip install --upgrade --user --upgrade-strategy eager --quiet pip
-        Write-Message -Message "Starting 'pip install --upgrade pipx'." -Style Debug
-        . py -m pip install --upgrade --user --upgrade-strategy eager --quiet pipx
-
-        Write-Message -Message 'Updating Pipx packages...' @headerStyle
-        Write-Message -Message "Starting 'pipx upgrade-all'." -Style Debug
-        . pipx upgrade-all --quiet
+        Write-Message -Message "Executing 'uv pip install pip --system  --upgrade --quiet'." -Style Debug
+        . uv pip install pip --system --upgrade --quiet
+        Write-Message -Message "Executing 'uv self update'." -Style Debug
+        . uv self update
+        Write-Message -Message "Executing 'uv cache prune'." -Style Debug
+        . uv cache prune --quiet
+        Write-Message -Message "Executing 'uv tool upgrade --all'." -Style Debug
+        . uv tool upgrade --all
     }
 
     if ($PSCmdlet.ShouldProcess('PowerShell Modules')) {
@@ -110,9 +110,9 @@ process {
             Confirm = $False
             Force = [bool] $Force
         }
-        Write-Message -Message "Starting 'Update-Module -Scope CurrentUser'." -Style Debug
+        Write-Message -Message "Executing 'Update-Module -Scope CurrentUser'." -Style Debug
         Update-Module -Scope CurrentUser @updateModuleArgs
-        Write-Message -Message "Starting 'Update-Module -Scope AllUsers'." -Style Debug
+        Write-Message -Message "Executing 'Update-Module -Scope AllUsers'." -Style Debug
         gsudo { param($a); Update-Module -Scope AllUsers @a } -args $updateModuleArgs
     }
 
@@ -122,14 +122,20 @@ process {
                 [Environment]::GetFolderPath('CommonDesktop')
                 [Environment]::GetFolderPath('Desktop')
             )
-            Filter = '*.lnk'
-            Exclude = @('Adobe Digital Editions 4.5.lnk')
+            File = $true
+            Filter = '*.*'
+            Exclude = @('Digital Editions.lnk', 'PrêtNumérique BAnQ.url')
         }
         $desktopShortcuts = Get-ChildItem @getShortcutsArgs
         $shortcutCounts = ($desktopShortcuts | Measure-Object).Count
         if ($shortcutCounts) {
             Write-Message -Message "Removing $shortcutCounts desktop shortcuts." -Style Debug
-            Remove-Item $desktopShortcuts
+            $desktopShortcutsArgs = @{
+                Force = $True
+                Path = $desktopShortcuts
+            }
+            gsudo { param($a); $null = Remove-Item @a } -args $desktopShortcutsArgs
+            gsudRemove-Item $desktopShortcuts -Force
         }
         else {
             Write-Message -Message 'No desktop shortcuts to remove.' -Style Debug

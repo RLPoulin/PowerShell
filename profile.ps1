@@ -3,7 +3,7 @@
     My PowerShell profile.
 
 .NOTES
-    Version:        7.3.1
+    Version:        7.4.0
     Author:         Robert Poulin
     Creation Date:  2016-06-09
     Updated:        2024-09-25
@@ -138,6 +138,12 @@ else { Write-Message -Message "Can't register Oh My Posh completions: oh-my-posh
 
 if (Test-Command rustup) { rustup completions powershell | Out-String | Invoke-Expression }
 else { Write-Message -Message "Can't register Rust completions: rustup not found!" -Style Verbose -Color Red }
+
+if (Test-Command uv) {
+    (& uv generate-shell-completion powershell) | Out-String | Invoke-Expression
+    (& uvx --generate-shell-completion powershell) | Out-String | Invoke-Expression
+}
+else { Write-Message -Message "Can't register UV completions: uv not found!" -Style Verbose -Color Red }
 
 
 # → Show greeting.
